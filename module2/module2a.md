@@ -9,11 +9,11 @@ By the end of this module, you will:
 
 ## The Core Problem
 
-Building AI agents that truly serve human values requires more than technical competence—it demands systematic alignment with user priorities, operational constraints, and real-world consequences. The fundamental challenge isn't just making AI systems that work; it's making AI systems that work *the way humans actually need them to work*.
+Building AI agents that truly serve human values requires more than technical competence, it demands systematic alignment with user priorities, operational constraints, and real-world consequences. The fundamental challenge isn't just making AI systems that work; it's making AI systems that work *the way humans actually need them to work*.
 
 ## What Does "Alignment" Mean?
 
-AI agent alignment is the practice of ensuring that an AI system's behavior consistently reflects the values, priorities, and constraints of the humans it serves. An aligned agent doesn't just provide technically correct answers—it provides answers that are appropriate, responsible, and valuable within the specific context of use.
+AI agent alignment is the practice of ensuring that an AI system's behavior consistently reflects the values, priorities, and constraints of the humans it serves. An aligned agent doesn't just provide technically correct answers, it provides answers that are appropriate, responsible, and valuable within the specific context of use.
 
 ### Key Characteristics of Aligned Agents:
 - **Value-aware**: They understand what users truly care about, not just what they ask for

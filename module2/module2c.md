@@ -18,7 +18,7 @@ Each perspective addresses a critical aspect of implementation:
 
 ## Perspective 1: Be the Subject Matter Expert
 
-The first perspective requires stepping into your user's world to understand their workflow, urgency patterns, constraints, and the real stakes of their decisions. This isn't about gathering requirements—it's about developing genuine empathy for how your users work and what success means to them.
+The first perspective requires stepping into your user's world to understand their workflow, urgency patterns, constraints, and the real stakes of their decisions. This isn't about gathering requirements, it's about developing genuine empathy for how your users work and what success means to them.
 
 ### Understanding User Workflows
 
@@ -31,7 +31,7 @@ The first perspective requires stepping into your user's world to understand the
 **Decision-Making Context:**
 - What questions are users really trying to answer, beyond their immediate queries?
 - How do individual decisions fit into larger projects or processes?
-- What happens after users receive AI recommendations—how do they act on information?
+- What happens after users receive AI recommendations, how do they act on information?
 - Who else is involved in or affected by the decisions your AI system supports?
 
 **Constraint Recognition:**

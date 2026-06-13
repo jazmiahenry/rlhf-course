@@ -2,7 +2,7 @@
 
 ## Introduction: Embracing Uncertainty for Robust Alignment
 
-Traditional approaches to AI alignment often assume deterministic relationships: if an agent takes the "right" action in a given situation, it should reliably produce the "right" outcome. However, real-world environments are fundamentally stochastic—the same action in the same situation can produce dramatically different results due to factors beyond the agent's control.
+Traditional approaches to AI alignment often assume deterministic relationships: if an agent takes the "right" action in a given situation, it should reliably produce the "right" outcome. However, real-world environments are fundamentally stochastic, the same action in the same situation can produce dramatically different results due to factors beyond the agent's control.
 
 **The Paradigm Shift**: Rather than treating uncertainty as a problem to be minimized, stochastic reward modeling treats uncertainty as an essential feature of realistic alignment. By learning to maintain alignment across uncertain outcomes, agents develop more robust and generalizable aligned behavior.
 

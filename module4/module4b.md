@@ -22,14 +22,14 @@ By the end of this lesson, you will be able to:
 Module 4a established the bridge from MDP theory to real agent architecture.
 This lesson supplies the *learning foundations* the rest of Module 4 builds on:
 how an agent estimates value from sampled experience when it does not know the
-environment's dynamics in advance. Almost everything downstream — DQN's TD
-target in 4c, PPO's advantage estimates in 4d, GRPO's group baseline — is a
+environment's dynamics in advance. Almost everything downstream, DQN's TD
+target in 4c, PPO's advantage estimates in 4d, GRPO's group baseline, is a
 variation on the two ideas introduced here: **Monte Carlo** (learn from
 complete sampled returns) and **temporal-difference** (learn from one-step
 bootstrapped estimates).
 
-We keep the previous version of this lesson's good instinct — that a
-multi-turn interaction is naturally a stochastic process — but where that
+We keep the previous version of this lesson's good instinct, that a
+multi-turn interaction is naturally a stochastic process, but where that
 version only gestured at the algorithms, this one writes them down.
 
 ## Markov Chains: The Substrate
@@ -71,7 +71,7 @@ $$
 $$
 
 (The 0.6 mass that went straight to A at step 1 has already moved on to F by
-step 2 — a small reminder that "where you are now" and "where you were" are
+step 2, a small reminder that "where you are now" and "where you were" are
 different questions.)
 
 **Stationary distribution.** A distribution $\pi$ over states is **stationary**
@@ -84,14 +84,14 @@ $$
 This balance equation says the long-run fraction of time spent in each state is
 self-consistent under the dynamics. For an ergodic chain it is unique and
 describes where the process spends its time regardless of where it started.
-(For the matrix above the chain is not ergodic as written — A and F form a tight
-cycle — which is itself a useful diagnostic: the *structure* of $P$ tells you
+(For the matrix above the chain is not ergodic as written, A and F form a tight
+cycle, which is itself a useful diagnostic: the *structure* of $P$ tells you
 whether a conversation design has absorbing traps or healthy mixing before you
 ever run it.)
 
 Why this matters for agents: transition matrices let you reason about a
-conversation or tool-use *design* analytically — expected length, probability of
-reaching a resolution state, where loops form — before collecting any data.
+conversation or tool-use *design* analytically, expected length, probability of
+reaching a resolution state, where loops form, before collecting any data.
 
 ## Monte Carlo Value Estimation
 
@@ -124,12 +124,12 @@ The last line is the **incremental mean update**: $V(s) \leftarrow V(s) +
 \frac{1}{N(s)}(G - V(s))$, which is exactly a running average that never has to
 store past returns.
 
-**Strengths.** MC is **unbiased** — it averages actual sampled returns, making
-no assumption about the dynamics — and it **does not bootstrap**, so estimation
+**Strengths.** MC is **unbiased**, it averages actual sampled returns, making
+no assumption about the dynamics, and it **does not bootstrap**, so estimation
 error in one state never contaminates another.
 
 **Costs.** MC has **high variance** (a single return sums many random rewards)
-and requires **complete episodes** — you cannot update until the episode ends,
+and requires **complete episodes**, you cannot update until the episode ends,
 which is useless for never-ending interaction and slow when episodes are long.
 This is the same sparse, episode-level signal problem Module 4a flagged.
 
@@ -145,12 +145,11 @@ $$
 The bracketed quantity $\delta_t$ is the **TD error**: the difference between the
 current estimate $V(s_t)$ and a *bootstrapped* one-step target $r_{t+1} + \gamma
 V(s_{t+1})$. "Bootstrapping" means the target is built partly from the agent's
-own current estimate $V(s_{t+1})$ rather than from observed returns alone — we
+own current estimate $V(s_{t+1})$ rather than from observed returns alone, we
 update a guess toward a slightly-better guess.
 
 **Bias-variance trade-off vs MC.** Because the TD target uses only one real
-reward plus an estimate, it has **much lower variance** than a full MC return —
-but it is **biased** while $V$ is still wrong, since the bootstrap inherits that
+reward plus an estimate, it has **much lower variance** than a full MC return, but it is **biased** while $V$ is still wrong, since the bootstrap inherits that
 error. MC is the opposite: unbiased, high variance. In practice TD usually
 learns faster, and it works **online**, updating every step without waiting for
 the episode to end. This is why TD, not MC, is the engine inside DQN (4c) and
@@ -167,7 +166,7 @@ eligibility traces.
 
 ## Exploration vs Exploitation
 
-To estimate values you must *visit* states and *try* actions — but a greedy
+To estimate values you must *visit* states and *try* actions, but a greedy
 agent that always exploits its current estimates may never discover better
 options. Two standard rules manage this trade-off.
 
@@ -196,16 +195,16 @@ focusing exploration on genuine uncertainty.
 **Monte Carlo Tree Search (MCTS)** combines tree search with MC sampling to plan
 when a model (or simulator) of the dynamics is available. It repeats four phases:
 
-1. **Selection** — from the root, descend the existing tree by repeatedly
+1. **Selection**, from the root, descend the existing tree by repeatedly
    choosing children via a bandit rule (UCT, below) until reaching a node with
    unexpanded actions.
-2. **Expansion** — add one new child node for an untried action.
-3. **Simulation (rollout)** — from the new node, play out to a terminal state
+2. **Expansion**, add one new child node for an untried action.
+3. **Simulation (rollout)**, from the new node, play out to a terminal state
    using a fast default policy, observing the outcome.
-4. **Backpropagation** — propagate the rollout's result back up the visited path,
+4. **Backpropagation**, propagate the rollout's result back up the visited path,
    updating each node's visit count and value estimate.
 
-Selection uses the **UCT** rule (Kocsis & Szepesvári, 2006) — UCB applied to the
+Selection uses the **UCT** rule (Kocsis & Szepesvári, 2006), UCB applied to the
 tree:
 
 $$
@@ -216,9 +215,8 @@ with $\bar{Q}(s,a)$ the mean rollout value and $N$ the visit counts. AlphaGo
 (Silver et al., 2016) famously paired MCTS with deep value and policy networks to
 defeat a top human Go player.
 
-**Where MCTS sits in 2026 LLM work.** MCTS over *reasoning traces* — treating
-partial chains of thought as tree nodes and search to find better solution paths
-— is an active research direction, and it informs how people think about
+**Where MCTS sits in 2026 LLM work.** MCTS over *reasoning traces*, treating
+partial chains of thought as tree nodes and search to find better solution paths, is an active research direction, and it informs how people think about
 inference-time search. But it is **not** a standard component of production
 post-training: the dominant reasoning-model recipe (4d's GRPO/RLVR) trains the
 model to produce good traces directly rather than searching a tree at inference.
@@ -228,15 +226,14 @@ production answer.
 ## Where Monte Carlo Lives in Modern Post-Training
 
 Do not file MC away as "the slow, high-variance one you skip for TD." Its core
-idea — *estimate value by averaging sampled outcomes* — is exactly what **GRPO**
+idea, *estimate value by averaging sampled outcomes*, is exactly what **GRPO**
 (Group Relative Policy Optimization; Shao et al., 2024) does. For a given prompt,
 GRPO samples a **group** of $k$ responses, scores each, and uses the **group mean
 reward as the baseline** against which each response's advantage is measured.
 That group mean is a Monte Carlo estimate of the prompt's expected reward,
 computed fresh from samples rather than from a learned value network. It is why
 GRPO can drop PPO's critic entirely: the sampled group *is* the baseline. More
-broadly, rollout-based evaluation — sample many completions, average a metric —
-is Monte Carlo estimation, and it pervades how modern models are both trained and
+broadly, rollout-based evaluation, sample many completions, average a metric, is Monte Carlo estimation, and it pervades how modern models are both trained and
 measured.
 
 A note on the course notebooks: `RL_Alignment_Part2` implements a simplified
@@ -250,20 +247,19 @@ and its scaling to neural networks, in Module 4c.
   probabilities, and the **balance equation** $\pi P = \pi$ defines the
   stationary distribution. You can analyze a conversation design analytically
   before running it.
-- **Monte Carlo** estimates value by averaging complete sampled returns —
-  unbiased, no bootstrapping, but high variance and episode-completion-bound.
+- **Monte Carlo** estimates value by averaging complete sampled returns, unbiased, no bootstrapping, but high variance and episode-completion-bound.
 - **TD(0)** bootstraps from a one-step target with **TD error** $\delta_t =
-  r_{t+1} + \gamma V(s_{t+1}) - V(s_t)$ — lower variance, biased while learning,
+  r_{t+1} + \gamma V(s_{t+1}) - V(s_t)$, lower variance, biased while learning,
   works online. **n-step** and **TD(λ)** interpolate MC↔TD.
 - **ε-greedy** and **UCB** manage exploration; **MCTS** plans via UCT-guided
   rollouts and is a research thread for LLM reasoning, not a production default.
-- **GRPO's group mean baseline is Monte Carlo estimation** — the same idea,
+- **GRPO's group mean baseline is Monte Carlo estimation**, the same idea,
   alive at the center of modern post-training.
 
-## Looking Ahead — Module 4c
+## Looking Ahead, Module 4c
 
 TD learning paired with a lookup table works only when states are few. **Module
-4c** replaces the table with a neural network — $Q_\theta(s,a)$ — and confronts
+4c** replaces the table with a neural network, $Q_\theta(s,a)$, and confronts
 the instability that creates (the "deadly triad"), arriving at Deep Q-Networks.
 The TD error you met here is the exact quantity DQN regresses on.
 
@@ -271,5 +267,5 @@ The TD error you met here is the exact quantity DQN regresses on.
 
 - Sutton, R. S., & Barto, A. G. (2018). *Reinforcement Learning: An Introduction* (2nd ed.). MIT Press.
 - Kocsis, L., & Szepesvári, C. (2006). Bandit based Monte-Carlo planning. *ECML*.
-- Silver, D., et al. (2016). Mastering the game of Go with deep neural networks and tree search. *Nature*, 529, 484–489.
+- Silver, D., et al. (2016). Mastering the game of Go with deep neural networks and tree search. *Nature*, 529, 484-489.
 - Shao, Z., et al. (2024). DeepSeekMath: Pushing the limits of mathematical reasoning in open language models (GRPO). arXiv:2402.03300.

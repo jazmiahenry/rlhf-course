@@ -24,7 +24,7 @@ for continuous action spaces, where $d$ is the dimensionality.
 
 ### Beyond Simple Actions: Tool-Based Action Spaces
 
-For complex AI agents, actions aren't just simple choices—they're sophisticated tools with different capabilities, costs, and alignment properties. Each action can be characterized by a **feature vector**:
+For complex AI agents, actions aren't just simple choices, they're sophisticated tools with different capabilities, costs, and alignment properties. Each action can be characterized by a **feature vector**:
 
 $$\mathbf{f}(a_i) = [c_i, t_i, p_i, \mathbf{s}_i, \mathbf{v}_i]$$
 
@@ -351,4 +351,4 @@ $$E_{\text{align}} = \max_{\mathbf{w}} \max_{a \in A} \mathbf{w}^T \mathbf{v}(a)
 
 Understanding action space design provides the foundation for creating agents that can express aligned behavior. In the next lesson (Module 3C), we'll explore how stochastic rewards create the learning signal that guides agents toward aligned action selection, building on the value-differentiating action spaces covered here.
 
-**Key Takeaway**: The action space defines what kinds of aligned behaviors are possible. Everything else—learning algorithms, policies, rewards—can only work with the alignment capabilities that the action space provides.
+**Key Takeaway**: The action space defines what kinds of aligned behaviors are possible. Everything else, learning algorithms, policies, rewards, can only work with the alignment capabilities that the action space provides.

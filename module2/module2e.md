@@ -135,13 +135,13 @@ Vd = αRd + βSd + w⊤Xd + λ·Ed·Qd
 - **w = 0.2**: Important personalization (client-specific needs)
 - **λ = 0.1**: Low exploration (focus on reliable information during uncertainty)
 
-**Looking Ahead — Sequential Decision-Making:**
+**Looking Ahead, Sequential Decision-Making:**
 ```
 π* = argmaxπ E[∑(t=0 to T) γᵗ · V(dt)]
 ```
 
-Here π is a *policy* — a rule for choosing which document to surface at each
-step t — V(dt) is the value score of the document chosen at step t, and γ
+Here π is a *policy*, a rule for choosing which document to surface at each
+step t, V(dt) is the value score of the document chosen at step t, and γ
 (between 0 and 1) discounts future value relative to immediate value. The
 optimal policy π* maximizes expected *cumulative* value over a whole analysis
 session, not just the single best next document. Module 3 develops this
@@ -352,7 +352,7 @@ Based on feedback:
 ## Key Takeaways from the Example
 
 ### Alignment Enables Better Performance
-- The aligned system doesn't just filter information—it enhances analytical capability by ensuring analysts focus on valuable, appropriate content
+- The aligned system doesn't just filter information, it enhances analytical capability by ensuring analysts focus on valuable, appropriate content
 - Mathematical scoring provides consistency and objectivity while respecting human values and constraints
 - Context-awareness allows the same system to serve different users and situations effectively
 

@@ -1,4 +1,4 @@
-# Module 4c: Deep Q-Networks — Value-Based Deep RL
+# Module 4c: Deep Q-Networks, Value-Based Deep RL
 
 ## Learning Objectives
 
@@ -8,8 +8,8 @@ By the end of this lesson, you will be able to:
   in large or continuous state spaces.
 - Define a parameterized action-value function $Q_\theta(s, a)$ and articulate
   the **deadly triad** that makes naive value-based deep RL unstable.
-- Explain the two stabilizing ideas in DQN — **experience replay** and **target
-  networks** — and state the DQN loss precisely.
+- Explain the two stabilizing ideas in DQN, **experience replay** and **target
+  networks**, and state the DQN loss precisely.
 - Recall the one-line mathematical change behind each major DQN variant: Double
   DQN, Dueling networks, Prioritized Experience Replay, and how Rainbow combines
   them.
@@ -27,7 +27,7 @@ In Module 3 you met the value-based view of reinforcement learning, and the
 **Module 3 notebook (Part 2)** had you implement a *simplified tabular
 Q-learning* loop. That exercise was deliberately scoped down: it stored one
 number per state-action pair and updated them one at a time. This lesson is
-where Q-learning is treated fully — where we confront what happens when the
+where Q-learning is treated fully, where we confront what happens when the
 table no longer fits, and what we must do to make learning work anyway.
 
 Recall the **Q-learning** update rule (Watkins, 1989; Watkins & Dayan, 1992).
@@ -41,7 +41,7 @@ $$
 The bracketed term is the **temporal-difference (TD) error**: the gap between
 our current estimate $Q(s,a)$ and a one-step-better estimate
 $r + \gamma \max_{a'} Q(s', a')$. The $\max$ over next actions is what makes
-Q-learning **off-policy** — it learns about the greedy policy regardless of the
+Q-learning **off-policy**, it learns about the greedy policy regardless of the
 (possibly exploratory) policy that actually generated the data. Watkins & Dayan
 proved that, under suitable conditions (every state-action pair visited
 infinitely often, a decaying learning rate), tabular Q-learning converges to the
@@ -56,12 +56,11 @@ pair. That assumption is fatal in practice:
   128 colors. The number of distinct screens dwarfs the number of atoms in the
   observable universe. You cannot tabulate it.
 - **No generalization.** A table treats $s$ and a near-identical $s'$ as wholly
-  unrelated entries. It learns nothing about one state by visiting a similar one
-  — so it must visit *every* state many times. That is impossible in large
+  unrelated entries. It learns nothing about one state by visiting a similar one, so it must visit *every* state many times. That is impossible in large
   spaces.
 
 The fix is **function approximation**: replace the table with a parameterized
-function $Q_\theta(s, a)$ — a neural network with weights $\theta$ — that maps a
+function $Q_\theta(s, a)$, a neural network with weights $\theta$, that maps a
 state to estimated values and *generalizes* across similar states. For Atari,
 $Q_\theta$ is a convolutional network that takes a stack of recent frames and
 outputs one value per discrete action.
@@ -69,21 +68,21 @@ outputs one value per discrete action.
 ### The deadly triad
 
 Function approximation does not come for free. Sutton & Barto (2018) name three
-ingredients that, when combined, can cause value estimates to diverge — the
+ingredients that, when combined, can cause value estimates to diverge, the
 **deadly triad**:
 
-1. **Function approximation** — $Q_\theta$ shares parameters across states, so an
+1. **Function approximation**, $Q_\theta$ shares parameters across states, so an
    update for one state perturbs estimates everywhere.
-2. **Bootstrapping** — the update target $r + \gamma \max_{a'} Q_\theta(s', a')$
+2. **Bootstrapping**, the update target $r + \gamma \max_{a'} Q_\theta(s', a')$
    is built from the network's own (wrong) estimates, not from ground-truth
    returns. Errors feed back into targets.
-3. **Off-policy learning** — the data distribution (from an exploratory or
+3. **Off-policy learning**, the data distribution (from an exploratory or
    replayed behavior policy) differs from the policy being evaluated, so the
    updates are not a well-behaved expectation under any fixed distribution.
 
 Any one or two of these is usually safe. All three together can make $Q_\theta$
 spiral away from $Q^*$. Q-learning with a neural network sits squarely in the
-triad — which is exactly why a naive implementation diverges, and why DQN's
+triad, which is exactly why a naive implementation diverges, and why DQN's
 contribution was a set of tricks to tame it.
 
 ---
@@ -121,7 +120,7 @@ is taken over $\mathcal{D}$ precisely because of replay.
 
 The TD target $r + \gamma \max_{a'} Q_\theta(s', a')$ depends on the very
 parameters $\theta$ we are updating. Chasing a target that moves every gradient
-step is like trying to hit a target that jumps each time you aim — it couples the
+step is like trying to hit a target that jumps each time you aim, it couples the
 prediction and the target and amplifies the bootstrapping instability.
 
 DQN introduces a separate **target network** $Q_{\theta^-}$ with parameters
@@ -153,7 +152,7 @@ across games, DQN reached **human-level or above performance on many of the
 Atari 2600 games** in the Arcade Learning Environment, learning end-to-end from
 screen and score alone. It performed strongly on reactive games and notably
 poorly on those requiring long-horizon planning or exploration (e.g.,
-*Montezuma's Revenge*). The headline was generality from a single recipe — not a
+*Montezuma's Revenge*). The headline was generality from a single recipe, not a
 claim of superhuman play everywhere.
 
 ---
@@ -181,8 +180,7 @@ stability and final performance.
 ### Dueling networks (Wang et al., 2016)
 
 Often the value of *being in a state* matters far more than the differences
-between actions there. Dueling architectures split the network into two streams —
-a state-value $V(s)$ and an advantage $A(s, a)$ — and recombine them. A naive sum
+between actions there. Dueling architectures split the network into two streams, a state-value $V(s)$ and an advantage $A(s, a)$, and recombine them. A naive sum
 $Q = V + A$ is **unidentifiable** (you can add a constant to $V$ and subtract it
 from $A$ without changing $Q$), so the advantage is mean-subtracted to pin it
 down:
@@ -198,7 +196,7 @@ taken, which helps wherever action choice is often irrelevant.
 
 Uniform replay wastes effort on transitions the network already predicts well.
 **Prioritized Experience Replay (PER)** samples transitions in proportion to the
-magnitude of their TD error — the "most surprising" experiences — with priority
+magnitude of their TD error, the "most surprising" experiences, with priority
 $p_i \propto |\delta_i|^\omega$, where $\delta_i$ is the TD error and $\omega$
 controls how aggressively we prioritize. Non-uniform sampling biases the
 expectation, so PER corrects it with **importance-sampling weights**:
@@ -214,10 +212,10 @@ consistently speeds learning by focusing compute where the error is largest.
 ### Rainbow (Hessel et al., 2018)
 
 **Rainbow** asked the obvious question: are these improvements complementary? It
-combined six independent extensions — Double Q-learning, dueling networks,
+combined six independent extensions, Double Q-learning, dueling networks,
 prioritized replay, multi-step (n-step) returns, distributional RL (C51, which
 models the full return distribution rather than its mean), and noisy networks for
-exploration — into a single agent. The combination outperformed every component
+exploration, into a single agent. The combination outperformed every component
 in isolation on the Atari benchmark, and ablations showed prioritized replay and
 multi-step returns contributed the most. Rainbow is the standard reference for
 "value-based deep RL, tuned."
@@ -226,28 +224,28 @@ multi-step returns contributed the most. Rainbow is the standard reference for
 
 ## 4. Where Value-Based RL Is Actually Used (2026, Honestly)
 
-Value-based deep RL is a mature, useful tool — in a specific shape of problem:
+Value-based deep RL is a mature, useful tool, in a specific shape of problem:
 **discrete action spaces, a clear scalar reward, and cheap, abundant environment
 interaction.** Where those hold, it shines:
 
-- **Games and simulated control** — Atari, board and video games, and other
+- **Games and simulated control**, Atari, board and video games, and other
   simulators remain the canonical proving ground and a live research setting.
-- **Recommendation candidate ranking (research)** — framing next-item or
+- **Recommendation candidate ranking (research)**, framing next-item or
   candidate selection as a discrete-action value problem appears in the
   literature, though production recommenders lean heavily on supervised and
   bandit methods.
-- **Robotics primitives** — discrete skill or option selection (which low-level
+- **Robotics primitives**, discrete skill or option selection (which low-level
   controller to invoke) is a natural fit, even when the underlying control is
   continuous.
-- **Resource scheduling (research)** — job, cache, and compute scheduling cast as
+- **Resource scheduling (research)**, job, cache, and compute scheduling cast as
   discrete sequential decisions are an active research area.
 
 Be precise about the boundary: many of these are *research* framings, not
 deployed defaults. Value-based methods also struggle with large or continuous
-action spaces (the $\max_{a'}$ becomes intractable) — which is where the
+action spaces (the $\max_{a'}$ becomes intractable), which is where the
 **policy-based** methods of the next lesson take over.
 
-> ### Sidebar — Why your LLM orchestrator is not a DQN
+> ### Sidebar, Why your LLM orchestrator is not a DQN
 >
 > It is tempting to imagine that a system coordinating multiple LLM "agents"
 > learns, by reinforcement, a $Q$-function over which agent to call next. **It
@@ -259,7 +257,7 @@ action spaces (the $\max_{a'}$ becomes intractable) — which is where the
 >
 > - **Action space.** A DQN needs a small, fixed, discrete action set so
 >   $\max_{a'} Q(s', a')$ is well-defined. "What should the orchestrator do next"
->   is an open-ended space of natural-language plans and tool calls — not
+>   is an open-ended space of natural-language plans and tool calls, not
 >   enumerable.
 > - **Episode structure.** DQN assumes many resettable episodes with a clean
 >   scalar reward per transition. Agent workflows are heterogeneous, often
@@ -270,18 +268,18 @@ action spaces (the $\max_{a'}$ becomes intractable) — which is where the
 >   DQN-scale experience.
 >
 > When you read that an orchestrator "learns to route," that intelligence is the
-> LLM's in-context reasoning and the engineering around it — not a value network.
+> LLM's in-context reasoning and the engineering around it, not a value network.
 > Treat any claim of a deployed DQN scheduling LLM agents with deep skepticism.
 
 ### Where value functions *do* appear in LLM-land
 
-Value-based *thinking* is not absent from LLM training — it just does not look
+Value-based *thinking* is not absent from LLM training, it just does not look
 like a DQN choosing agents. The clearest place is the **critic in PPO-based
 RLHF**: a value head $V_\phi(s)$ estimates the expected reward-to-go of a partial
 generation and is used to compute advantages that reduce gradient variance.
 **Process reward models (PRMs)**, which score intermediate reasoning steps, can
 be read as value-*like* signals over partial trajectories. Both are estimating
-"how good is this state," which is exactly the value-function idea — applied to
+"how good is this state," which is exactly the value-function idea, applied to
 text generation rather than to discrete game actions. We pick this thread up in
 the next lesson.
 
@@ -294,7 +292,7 @@ canonical exercise path:
 
 1. **Gymnasium `CartPole-v1`.** The right first target: a 4-dimensional
    continuous state, two discrete actions (push left/right), and a reward of +1
-   per step the pole stays up. A DQN here is a small multilayer perceptron — a
+   per step the pole stays up. A DQN here is a small multilayer perceptron, a
    few dozen lines around an `env.step()` loop, a replay buffer (a `deque`), a
    target network refreshed every $C$ steps, and an $\epsilon$-greedy policy with
    $\epsilon$ annealed over training. CartPole trains in minutes on a CPU, so you
@@ -309,8 +307,7 @@ canonical exercise path:
 3. **Reference implementation.** Before scaling up, compare against
    **`stable-baselines3`**, whose `DQN` class is a well-tested, readable
    implementation. Run their DQN on CartPole, then diff its behavior against
-   yours to localize discrepancies. Use it as an oracle, not a substitute —
-   implement the core loop yourself first.
+   yours to localize discrepancies. Use it as an oracle, not a substitute, implement the core loop yourself first.
 
 A good milestone: get your from-scratch CartPole DQN to reach the maximum episode
 return reliably, then add **Double DQN** (one line in the target computation) and
@@ -323,8 +320,8 @@ confirm the value estimates stop drifting upward.
 - **Tabular Q-learning** (Watkins & Dayan, 1992) converges to $Q^*$ but cannot
   scale; **function approximation** with $Q_\theta$ generalizes across states at
   the cost of stability.
-- The **deadly triad** — function approximation + bootstrapping + off-policy
-  learning — is why naive deep Q-learning diverges (Sutton & Barto, 2018).
+- The **deadly triad**, function approximation + bootstrapping + off-policy
+  learning, is why naive deep Q-learning diverges (Sutton & Barto, 2018).
 - **DQN** (Mnih et al., 2015) tamed the triad with **experience replay**
   (decorrelate data) and a **target network** (stop chasing a moving target),
   reaching human-level play on many Atari games from pixels with one recipe.
@@ -332,21 +329,19 @@ confirm the value estimates stop drifting upward.
   max-bias, **Dueling** factors $Q = V + A$ with mean-subtraction, **PER** samples
   by TD error with importance-sampling correction, **Rainbow** combines them.
 - Value-based RL fits **discrete-action, cheap-interaction** problems. It is
-  **not** how LLM agent orchestration works — that is LLM planning plus
+  **not** how LLM agent orchestration works, that is LLM planning plus
   engineering. Value functions *do* show up in LLM training as the **PPO critic**
   and **process reward models**.
 
 ---
 
-## Looking Ahead — Module 4d
+## Looking Ahead, Module 4d
 
 Value-based methods learn *how good* each action is and act greedily with respect
-to those values. That breaks down when the action space is large or continuous —
-the $\max_{a'}$ has no tractable solution — and it gives you no direct,
+to those values. That breaks down when the action space is large or continuous, the $\max_{a'}$ has no tractable solution, and it gives you no direct,
 differentiable handle on the policy itself. **Module 4d** crosses over to
 **policy-based** methods: we parameterize the policy $\pi_\theta(a \mid s)$
-directly, optimize it with the policy-gradient theorem, and arrive at **PPO** —
-the algorithm at the heart of RLHF. The value function does not disappear; it
+directly, optimize it with the policy-gradient theorem, and arrive at **PPO**, the algorithm at the heart of RLHF. The value function does not disappear; it
 returns as the **critic** that estimates advantages. Keep the value-vs-policy
 distinction in mind: 4c taught you to estimate value, 4d will teach you to
 optimize policy, and RLHF uses both at once.
@@ -356,8 +351,8 @@ optimize policy, and RLHF uses both at once.
 ## References
 
 - Watkins, C. J. C. H. (1989). *Learning from Delayed Rewards.* PhD thesis, University of Cambridge.
-- Watkins, C. J. C. H., & Dayan, P. (1992). Q-learning. *Machine Learning*, 8(3–4), 279–292.
-- Mnih, V., et al. (2015). Human-level control through deep reinforcement learning. *Nature*, 518(7540), 529–533.
+- Watkins, C. J. C. H., & Dayan, P. (1992). Q-learning. *Machine Learning*, 8(3-4), 279-292.
+- Mnih, V., et al. (2015). Human-level control through deep reinforcement learning. *Nature*, 518(7540), 529-533.
 - van Hasselt, H., Guez, A., & Silver, D. (2016). Deep reinforcement learning with double Q-learning. *AAAI*.
 - Wang, Z., et al. (2016). Dueling network architectures for deep reinforcement learning. *ICML*.
 - Schaul, T., Quan, J., Antonoglou, I., & Silver, D. (2016). Prioritized experience replay. *ICLR*.

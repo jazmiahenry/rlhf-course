@@ -56,16 +56,15 @@ PPO maximizes the clipped surrogate:
 
 $$L^{\text{CLIP}}(\theta) = \mathbb{E}_t\left[\min\left(r_t(\theta) \hat{A}_t,\; \text{clip}(r_t(\theta), 1-\epsilon, 1+\epsilon) \hat{A}_t\right)\right]$$
 
-where $\hat{A}_t$ is the advantage estimate and $\epsilon$ (typically 0.1–0.2)
+where $\hat{A}_t$ is the advantage estimate and $\epsilon$ (typically 0.1-0.2)
 bounds the update. Read the $\min$ carefully: when the advantage is positive,
 the objective stops rewarding ratio increases beyond $1+\epsilon$; when
 negative, it stops rewarding decreases below $1-\epsilon$. The policy
-therefore cannot profit from moving far from where it gathered its data —
-that is the entire trust-region idea expressed in one line of math.
+therefore cannot profit from moving far from where it gathered its data, that is the entire trust-region idea expressed in one line of math.
 
 ### Where PPO Actually Earns Its Keep: RLHF
 
-PPO's most consequential production role is not orchestration — it is
+PPO's most consequential production role is not orchestration, it is
 **post-training of language models**. In the classic RLHF pipeline (Ouyang
 et al., 2022, InstructGPT), PPO optimizes the LLM policy against a learned
 reward model, with two adaptations worth knowing exactly:
@@ -78,11 +77,11 @@ reward model, with two adaptations worth knowing exactly:
    token per timestep, with GAE computed over the token sequence and the
    value head predicting expected reward from each prefix.
 
-By 2025–26, **GRPO** (Group Relative Policy Optimization, Shao et al., 2024)
+By 2025-26, **GRPO** (Group Relative Policy Optimization, Shao et al., 2024)
 largely displaced PPO for reasoning-focused RL: it drops the learned value
 function entirely and instead baselines each response's reward against the
 mean of a *group* of responses sampled for the same prompt. No critic
-network means roughly half the memory and far simpler training — which is
+network means roughly half the memory and far simpler training, which is
 what made large-scale reasoning RL (RLVR on math/code verifiers) practical.
 PPO remains the right mental model: GRPO keeps the clipped ratio objective
 and changes only where the advantage baseline comes from.

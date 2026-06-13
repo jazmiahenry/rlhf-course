@@ -54,7 +54,7 @@ This transforms action selection from arbitrary choice to systematic optimizatio
 P(tool) = [accuracy, speed, cost_efficiency, coverage, reliability, safety, specialization]
 ```
 
-Every dimension points the same direction — higher is better — so the
+Every dimension points the same direction, higher is better, so the
 weighted sum below rewards desirable properties consistently. (We encode
 cost as cost-*efficiency* rather than raw cost for exactly this reason.)
 
@@ -403,21 +403,21 @@ class CurriculumAlignedAgent:
 ### Why the Investment Logic Favors Explicit Frameworks
 
 Costs and returns vary enormously by organization, so we won't invent
-numbers — but the *structure* of the economics is consistent:
+numbers, but the *structure* of the economics is consistent:
 
 **Where the cost goes**: Explicit frameworks front-load effort (value
 elicitation, tool characterization, scoring design) that implicit
-prompt-engineering approaches defer — and then pay for repeatedly in
+prompt-engineering approaches defer, and then pay for repeatedly in
 maintenance, incident response, and re-prompting whack-a-mole.
 
 **Where the return comes from**: Every failure category documented in
-Module 1B is a recurring operating cost — human verification of inconsistent
+Module 1B is a recurring operating cost, human verification of inconsistent
 outputs, professional liability exposure, abandoned deployments (RAND's >80%
 failure rate is mostly *sunk* development cost). A framework that makes
 decisions consistent and measurable attacks the recurring costs directly.
 
 **The measurement requirement**: Whether *your* implementation pays back is
-an empirical question — which is why the success metrics above (consistency
+an empirical question, which is why the success metrics above (consistency
 variance, utility capture, explainability rate) are defined before any code
 is written. If you cannot measure the improvement, you cannot claim it.
 
@@ -479,4 +479,4 @@ We stand at a critical moment where:
 
 In Module 1D, we'll outline the specific path from current problems to mathematical solutions. We'll introduce the multi-tool research agent that serves as our working example throughout the course and preview the practical frameworks you'll learn to implement.
 
-**Key Insight**: Mathematical alignment is not just academically interesting—it's the practical answer to the documented failure pattern from Module 1B: most AI projects fail for objective- and measurement-shaped reasons, exactly the gap explicit frameworks close. The frameworks exist; what's needed now is systematic implementation.
+**Key Insight**: Mathematical alignment is not just academically interesting, it's the practical answer to the documented failure pattern from Module 1B: most AI projects fail for objective- and measurement-shaped reasons, exactly the gap explicit frameworks close. The frameworks exist; what's needed now is systematic implementation.

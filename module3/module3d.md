@@ -2,9 +2,9 @@
 
 ## Introduction: Beyond Single Actions to Sequential Behavior
 
-While individual actions represent isolated decisions, real-world AI behavior consists of **trajectories**—sequences of actions taken over time that collectively accomplish complex goals. For alignment, this temporal dimension is crucial: an agent might make individually reasonable decisions that collectively violate user values, or it might need to make seemingly suboptimal choices early in a sequence to enable better long-term alignment.
+While individual actions represent isolated decisions, real-world AI behavior consists of **trajectories**, sequences of actions taken over time that collectively accomplish complex goals. For alignment, this temporal dimension is crucial: an agent might make individually reasonable decisions that collectively violate user values, or it might need to make seemingly suboptimal choices early in a sequence to enable better long-term alignment.
 
-**The Core Challenge**: Alignment isn't just about making good individual decisions—it's about maintaining values consistently throughout entire sequences of actions, even when those sequences involve uncertainty, changing contexts, and evolving constraints.
+**The Core Challenge**: Alignment isn't just about making good individual decisions, it's about maintaining values consistently throughout entire sequences of actions, even when those sequences involve uncertainty, changing contexts, and evolving constraints.
 
 This lesson explores the mathematical foundations of trajectory-level alignment and how agents can learn to maintain human values across complex, multi-step behaviors.
 
@@ -105,7 +105,7 @@ alignment score that weights recent steps most heavily:
 $$A_{\text{cumulative}}(\tau_{0:t}) = \sum_{k=0}^{t} \alpha^{k} \cdot \text{alignment\_score}(s_k, a_k)$$
 
 with $\alpha \in (0, 1)$ (the companion notebook uses $\alpha = 0.95$). This
-gives the agent — and us, as evaluators — a continuously updated signal: a dip
+gives the agent, and us, as evaluators, a continuously updated signal: a dip
 in the running score flags a potential alignment violation while there is
 still time to correct course within the same trajectory.
 
@@ -126,8 +126,7 @@ different levels of care.
 
 These two mechanisms are implemented as `compute_alignment_score()` and
 `check_consistency_constraint()` in the `AlignedTrajectory` class of the
-companion notebook (`RL_Alignment_Part2_Trajectories_and_Curriculum.ipynb`) —
-run them on the demo trajectories there to see both a passing and a failing
+companion notebook (`RL_Alignment_Part2_Trajectories_and_Curriculum.ipynb`), run them on the demo trajectories there to see both a passing and a failing
 case.
 
 ## Credit Assignment Across Trajectories
@@ -136,11 +135,11 @@ Trajectory-level alignment raises the classic RL credit-assignment problem in
 a new form: when a trajectory violates a constraint, *which step* was the
 mistake?
 
-- **Consistency violations** localize naturally — the check identifies the
+- **Consistency violations** localize naturally, the check identifies the
   specific pair $(t_1, t_2)$ that diverged, and the later step is usually the
   correction target.
 - **Progressive-refinement violations** point to the step where expected
-  information quality dropped beyond the exploration allowance — often a tool
+  information quality dropped beyond the exploration allowance, often a tool
   choice that traded quality for speed when the context didn't call for it.
 - **Resource-rationality violations** are global: total spend exceeded the
   information gained. Attribution requires comparing each step's marginal

@@ -41,11 +41,11 @@ strong empirical support in specific settings (Bengio et al., 2009,
 "Curriculum Learning"; Narvekar et al., 2020, JMLR survey "Curriculum Learning
 for Reinforcement Learning Domains"), not a technique with general convergence
 guarantees. Whether a curriculum helps depends on the task structure, the
-stage decomposition, and the transfer mechanism — and badly designed curricula
+stage decomposition, and the transfer mechanism, and badly designed curricula
 can *hurt* by overfitting early stages. The framework in this lesson gives you
 a disciplined way to design and evaluate curricula; it does not make alignment
-mathematically guaranteed, and you should treat any such claim — here or in
-any paper — with skepticism. What the staged structure *does* buy you,
+mathematically guaranteed, and you should treat any such claim, here or in
+any paper, with skepticism. What the staged structure *does* buy you,
 demonstrably, is: (1) interpretable checkpoints where you can measure specific
 capabilities before adding complexity, and (2) the ability to keep safety
 constraints enforced while capability grows.
@@ -632,7 +632,7 @@ $\text{stage\_reversion} = \min\{i : \text{performance}^{(i)} > \tau_{\text{reco
 ### 1. Measured Progression
 
 Advancement criteria make each stage's capabilities explicit and testable
-before complexity increases — you know *what* the agent can do at each
+before complexity increases, you know *what* the agent can do at each
 checkpoint, not just its aggregate score.
 
 ### 2. Alignment Constraints Stay Enforced
@@ -646,7 +646,7 @@ checked at every stage gate), not a theorem about the learned policy.
 ### 3. Sample Efficiency (Often, Not Always)
 
 In many domains, staged progression reaches target performance with fewer
-samples than direct training — see Narvekar et al. (2020) for both positive
+samples than direct training, see Narvekar et al. (2020) for both positive
 results and failure cases. Measure this on your own task; do not assume it.
 
 ### 4. Interpretable Development
@@ -665,13 +665,12 @@ Early stages provide safe environments for learning alignment principles before 
 
 ### 1. Alignment Must Be Built Progressively
 
-Complex aligned behavior cannot be learned directly—it emerges from systematic progression through simpler alignment challenges.
+Complex aligned behavior cannot be learned directly, it emerges from systematic progression through simpler alignment challenges.
 
 ### 2. Mathematical Structure Enables Measurement
 
 Formal curriculum design makes alignment preservation, capability progression,
-and transfer effectiveness *measurable and enforceable at stage boundaries* —
-which is what lets you catch regressions before they compound.
+and transfer effectiveness *measurable and enforceable at stage boundaries*, which is what lets you catch regressions before they compound.
 
 ### 3. Transfer Learning Is Critical
 
@@ -679,7 +678,7 @@ The ability to transfer alignment principles from simple to complex scenarios is
 
 ### 4. Stage Advancement Requires Multiple Criteria
 
-Performance alone is insufficient—alignment, stability, and robustness must all be verified before progression.
+Performance alone is insufficient, alignment, stability, and robustness must all be verified before progression.
 
 ### 5. Early Stages Shape Final Capabilities
 
@@ -691,7 +690,7 @@ Effective curricula must be designed for specific domains and alignment challeng
 
 ## Conclusion: The Path to Aligned Intelligence
 
-Curriculum learning provides a systematic, mathematically grounded approach to developing AI agents that maintain human values while solving increasingly complex problems. The key insight is that alignment is not a property that can be added after the fact—it must be built into the learning process from the very beginning.
+Curriculum learning provides a systematic, mathematically grounded approach to developing AI agents that maintain human values while solving increasingly complex problems. The key insight is that alignment is not a property that can be added after the fact, it must be built into the learning process from the very beginning.
 
 **The Mathematical Foundation**: By formally structuring the progression from simple value recognition through complex multi-objective optimization, we create agents that naturally express human values because those values are mathematically embedded in their decision-making processes.
 
@@ -702,12 +701,12 @@ Curriculum learning provides a systematic, mathematically grounded approach to d
 4. **Dynamic Adaptation**: Adapting to changing contexts while preserving core values
 5. **Adversarial Robustness**: Maintaining alignment under pressure and manipulation
 
-**The Transfer Mechanism**: Transfer learning between stages is what lets alignment principles learned in simple scenarios carry forward to complex ones — when the stage decomposition matches the task structure.
+**The Transfer Mechanism**: Transfer learning between stages is what lets alignment principles learned in simple scenarios carry forward to complex ones, when the stage decomposition matches the task structure.
 
-**The Measurement Structure**: Formal advancement criteria and constraint preservation let you *verify* at every stage boundary that alignment is maintained — and halt progression when it isn't.
+**The Measurement Structure**: Formal advancement criteria and constraint preservation let you *verify* at every stage boundary that alignment is maintained, and halt progression when it isn't.
 
-This curriculum approach moves beyond hoping that aligned behavior emerges accidentally toward systematically engineering — and continuously measuring — agents that express the intended values in their decision-making. No training procedure guarantees alignment; what this one provides is a structure in which misalignment is caught early and cheaply instead of late and expensively.
+This curriculum approach moves beyond hoping that aligned behavior emerges accidentally toward systematically engineering, and continuously measuring, agents that express the intended values in their decision-making. No training procedure guarantees alignment; what this one provides is a structure in which misalignment is caught early and cheaply instead of late and expensively.
 
-> **Note on the companion notebook**: `RL_Alignment_Part2_Trajectories_and_Curriculum.ipynb` implements a *condensed 4-stage version* of this curriculum (Single-Tool Mastery → Sequential Decisions → Stochastic Adaptation → Adversarial Robustness) so it runs in minutes on a laptop. The mapping: notebook stage 1 covers lesson stages 1–2 (value recognition + trade-offs), notebook stages 2–4 correspond to lesson stages 3–5. The episode counts in this lesson describe a production-scale curriculum; the notebook uses 50–80 episodes per stage for demonstration.
+> **Note on the companion notebook**: `RL_Alignment_Part2_Trajectories_and_Curriculum.ipynb` implements a *condensed 4-stage version* of this curriculum (Single-Tool Mastery → Sequential Decisions → Stochastic Adaptation → Adversarial Robustness) so it runs in minutes on a laptop. The mapping: notebook stage 1 covers lesson stages 1-2 (value recognition + trade-offs), notebook stages 2-4 correspond to lesson stages 3-5. The episode counts in this lesson describe a production-scale curriculum; the notebook uses 50-80 episodes per stage for demonstration.
 
 The next step is implementing these mathematical frameworks in practice, demonstrating how the theoretical principles translate to real aligned behavior in complex, uncertain environments.

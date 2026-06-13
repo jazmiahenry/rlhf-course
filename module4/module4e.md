@@ -10,7 +10,7 @@ By the end of this module, you will:
 
 ## Introduction: Ensuring Aligned Orchestration at Scale
 
-In Modules 4c and 4d, you learned powerful algorithms for agent orchestration—DQN for value-based coordination and PPO for policy-based coordination. However, these general reinforcement learning methods don't inherently guarantee that the learned orchestration strategies will remain aligned with human values and intentions.
+In Modules 4c and 4d, you learned powerful algorithms for agent orchestration, DQN for value-based coordination and PPO for policy-based coordination. However, these general reinforcement learning methods don't inherently guarantee that the learned orchestration strategies will remain aligned with human values and intentions.
 
 **The Alignment Challenge**: As orchestration systems become more sophisticated and autonomous, they may develop coordination strategies that optimize for measurable objectives while inadvertently violating human values, safety requirements, or ethical principles. Standard RL algorithms can't distinguish between "effective coordination" and "aligned effective coordination."
 
@@ -34,7 +34,7 @@ For example, evaluators might compare two different approaches to handling a com
 
 The preference collection process must account for the complexity of orchestration decisions by presenting comparisons that capture different aspects of coordination quality, including efficiency, fairness, safety, and alignment with stated objectives. This requires careful design of evaluation scenarios that reveal human preferences about the trade-offs inherent in orchestration decisions.
 
-### How DPO Actually Works — No Reward Model, No Preference Model
+### How DPO Actually Works, No Reward Model, No Preference Model
 
 It is worth being precise here, because DPO is frequently misdescribed.
 The *classic* RLHF pipeline (Christiano et al., 2017; Ouyang et al., 2022)
@@ -49,7 +49,7 @@ eliminating stage 1.** There is no separate preference or reward model at
 any point. Rafailov et al. showed that the RLHF objective has a closed-form
 optimal policy, and that the reward function can be re-expressed *in terms
 of the policy itself*. Substituting that re-parameterization into the
-Bradley–Terry preference likelihood yields a simple supervised loss directly
+Bradley-Terry preference likelihood yields a simple supervised loss directly
 on the policy:
 
 $$\mathcal{L}_{\text{DPO}}(\pi_\theta; \pi_{\text{ref}}) = -\mathbb{E}_{(x, y_w, y_l) \sim \mathcal{D}}\left[\log \sigma\left(\beta \log \frac{\pi_\theta(y_w|x)}{\pi_{\text{ref}}(y_w|x)} - \beta \log \frac{\pi_\theta(y_l|x)}{\pi_{\text{ref}}(y_l|x)}\right)\right]$$
@@ -57,20 +57,20 @@ $$\mathcal{L}_{\text{DPO}}(\pi_\theta; \pi_{\text{ref}}) = -\mathbb{E}_{(x, y_w,
 where $(x, y_w, y_l)$ is a prompt with a preferred ($y_w$) and dispreferred
 ($y_l$) response, $\pi_{\text{ref}}$ is the frozen reference policy (usually
 the SFT model), $\sigma$ is the sigmoid, and $\beta$ controls how far the
-policy may drift from the reference — playing the role the KL penalty plays
+policy may drift from the reference, playing the role the KL penalty plays
 in PPO-based RLHF. Training is plain gradient descent on preference pairs:
 no reward model, no rollouts, no RL loop. That is why DPO became the default
-preference-tuning method for open-weight models — it is dramatically simpler
+preference-tuning method for open-weight models, it is dramatically simpler
 and more stable than the PPO pipeline at comparable quality.
 
 The trade-off: DPO is constrained to the preference pairs you have (it
 cannot explore beyond them the way an RL loop can), and it inherits the
-Bradley–Terry assumption that preferences are pairwise and consistent.
+Bradley-Terry assumption that preferences are pairwise and consistent.
 
-### The Post-DPO Landscape (2024–2026)
+### The Post-DPO Landscape (2024-2026)
 
 DPO opened a family of direct-alignment methods, and practice has kept
-moving — a current course must place DPO in this lineage:
+moving, a current course must place DPO in this lineage:
 
 - **Variants**: KTO (works from binary good/bad labels instead of pairs),
   SimPO (drops the reference model), ORPO (folds preference optimization
@@ -81,7 +81,7 @@ moving — a current course must place DPO in this lineage:
   group. This made RL training cheap enough to run at scale and powered
   the reasoning-model wave (DeepSeek-R1, 2025).
 - **RLVR** (reinforcement learning from verifiable rewards) replaced the
-  learned reward signal entirely where outputs can be *checked* — math
+  learned reward signal entirely where outputs can be *checked*, math
   answers, passing tests, valid tool calls. When the reward is a verifier
   rather than a model, reward hacking has far less room to operate. As of
   2026 this is the dominant paradigm for training reasoning and agentic
@@ -179,7 +179,7 @@ Long-term alignment tracking enables detection of alignment drift, where orchest
 
 ### Scalability of Human Oversight
 
-Both DPO and Constitutional AI rely on human input—either through preference collection or constitutional principle specification—which creates scalability challenges as orchestration systems grow in complexity and deployment scope. The amount of human oversight required may grow faster than the number of available human evaluators or the capacity for constitutional principle specification.
+Both DPO and Constitutional AI rely on human input, either through preference collection or constitutional principle specification, which creates scalability challenges as orchestration systems grow in complexity and deployment scope. The amount of human oversight required may grow faster than the number of available human evaluators or the capacity for constitutional principle specification.
 
 Addressing these scalability challenges requires efficient preference elicitation methods that can extract maximum alignment information from limited human input, automated preference extrapolation techniques that can generalize human preferences to novel coordination scenarios, and hierarchical oversight structures that enable human supervision to scale across large orchestration systems.
 

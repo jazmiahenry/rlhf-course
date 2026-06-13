@@ -68,7 +68,7 @@ User Experience: Consistently receives peer-reviewed medical information
 
 ### Why This Example Matters
 
-Throughout this course, we'll build a **Multi-Tool Research Agent** that demonstrates mathematical alignment principles. This isn't just a theoretical exercise—it's a practical system you can implement and use.
+Throughout this course, we'll build a **Multi-Tool Research Agent** that demonstrates mathematical alignment principles. This isn't just a theoretical exercise, it's a practical system you can implement and use.
 
 **Relevance**: Research assistance is a common AI use case where tool selection dramatically affects outcome quality. The principles you learn apply to any multi-tool AI system.
 
@@ -312,7 +312,7 @@ trade-off structure:
 ### Healthcare AI
 
 **The stakes**: Diagnostic support tools whose recommendations vary across
-identical presentations undermine clinical adoption — accuracy and safety
+identical presentations undermine clinical adoption, accuracy and safety
 must dominate speed in the value weights, with the weighting *auditable* for
 regulators.
 
@@ -327,19 +327,18 @@ system).
 ### Legal Research
 
 **The stakes**: The 1,300+ documented court cases involving AI-hallucinated
-citations (Module 1B) all share one root cause — no explicit
+citations (Module 1B) all share one root cause, no explicit
 credibility/verification weighting in how sources were selected and used.
 
 ### Educational Technology
 
-**The stakes**: Source-selection appropriateness depends on student level —
-a context variable that must enter the scoring function explicitly, or the
+**The stakes**: Source-selection appropriateness depends on student level, a context variable that must enter the scoring function explicitly, or the
 same query from a ninth-grader and a doctoral student gets the same sources.
 
 **An honest caveat**: these are *arguments from problem structure*, not
 measured deployment results of this course's framework. When you implement
 the Module 2 system, you will measure its effect on consistency and decision
-quality yourself — that measurement discipline, not promised percentages, is
+quality yourself, that measurement discipline, not promised percentages, is
 what distinguishes engineering from marketing.
 
 ## Setting Expectations: What Module 2 Will Deliver
@@ -371,9 +370,9 @@ what distinguishes engineering from marketing.
 
 ### The Urgency
 
-**Current State**: Most AI projects fail (RAND: >80%; MIT: ~95% of GenAI pilots show no P&L impact — see Module 1B), overwhelmingly for measurement and objective reasons rather than capability reasons
+**Current State**: Most AI projects fail (RAND: >80%; MIT: ~95% of GenAI pilots show no P&L impact, see Module 1B), overwhelmingly for measurement and objective reasons rather than capability reasons
 **Opportunity Window**: Systematic approaches exist but most deployments don't use them
-**Competitive Reality**: The organizations in MIT's successful 5% treated deployment as a measurement problem — that discipline is learnable
+**Competitive Reality**: The organizations in MIT's successful 5% treated deployment as a measurement problem, that discipline is learnable
 **Technical Readiness**: Tools and frameworks are mature enough for production use
 
 ### The Path is Clear
