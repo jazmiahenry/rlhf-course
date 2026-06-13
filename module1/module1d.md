@@ -1,416 +1,139 @@
-# Module 1D: From Theory to Practice - The Path Forward
+# Module 1D: From Theory to Practice
 
-## Introduction: Bridging the Gap
+> **What you'll get out of this:** the roadmap for the rest of the course, the
+> 12-tool research agent we'll build on, and a worked example where the
+> "obvious" tool choice turns out to be wrong.
 
-We've established the problem (Modules 1A-1B) and outlined the mathematical solution framework (Module 1C). Now we need a practical path from current inconsistent AI systems to reliable, mathematically-aligned agents.
+## The bridge
 
-**The Challenge**: How do we move from understanding why mathematical alignment is necessary to actually implementing systems that work in the real world?
+You've got the problem (1A-1B) and the framework (1C). What you don't have yet is
+a path: how do you go from "inconsistent AI" to "a system that actually works in
+production"? Here it is, in three stages, easy to hard.
 
-**The Answer**: A systematic, progressive approach that starts with immediately implementable mathematical scoring and builds toward sophisticated learning systems.
+**Stage 1: Static mathematical scoring (Module 2).** Scoring functions that pick
+optimal tools. Implementable in days to weeks. Instant consistency, transparency,
+and optimality. No ML required.
 
-This module provides your roadmap for implementing mathematical alignment, introduces the multi-tool research agent that serves as our working example, and sets up the practical frameworks you'll learn in Module 2.
+**Stage 2: Dynamic learning systems (Modules 3A-3D).** ML with alignment
+constraints. Weeks to months. Adapts, learns from experience, handles messy
+context.
 
-## The Three-Stage Implementation Path
+**Stage 3: Curriculum learning (Modules 3E-3F).** Progressive training for robust
+alignment. Months. Survives adversarial conditions and complex multi-step
+reasoning.
 
-### Stage 1: Static Mathematical Scoring (Module 2)
-**Timeline**: Immediate implementation (1-4 weeks)
-**Approach**: Mathematical scoring functions that make optimal tool choices
-**Benefits**: Instant consistency, transparency, and optimality improvements
+## Why start with the boring one
 
-### Stage 2: Dynamic Learning Systems (Module 3A-3D)  
-**Timeline**: Medium-term implementation (2-6 months)
-**Approach**: Machine learning systems with mathematical alignment constraints
-**Benefits**: Adaptive improvement, sophisticated context handling, learning from experience
+Here's the thing people miss: **you do not need machine learning to solve the
+action-space problem.** Plain mathematical optimization gets you most of the way,
+immediately. Start there.
 
-### Stage 3: Curriculum Learning (Module 3E-3F)
-**Timeline**: Long-term implementation (6-18 months)
-**Approach**: Progressive training systems that build robust alignment capabilities
-**Benefits**: Adversarial robustness, complex multi-step reasoning, transferable alignment
+What Stage 1 buys you on day one:
 
-## Why Start with Static Mathematical Scoring?
+- **Consistency.** Same query plus same values equals the same choice, every time.
+- **Optimality.** Provably the best tool given the preferences and constraints.
+- **Transparency.** A clear, mathematical reason for every pick.
+- **Tunability.** Change behavior by changing weights. No retraining.
 
-### Immediate Value Proposition
+Picture the COVID-vaccine query from 1A. Today it's a slot machine: web articles
+one session, peer-reviewed studies the next, fact-check reports the third. With
+static scoring and `{accuracy: 0.9, speed: 0.5, safety: 0.95}` in a medical
+context, it resolves to academic search every single time. Same user, same
+quality, no luck involved.
 
-**Problem with Current AI**: Inconsistent, unpredictable tool selection
-**Static Scoring Solution**: Consistent, optimal tool selection using mathematical formulas
+## Our working example: the 12-tool research agent
 
-**Key Insight**: You don't need machine learning to solve the fundamental action space problem. Mathematical optimization can provide immediate, dramatic improvements.
+This is the system we build and rebuild across the whole course. Not a toy. A
+thing you could actually ship. It has twelve tools:
 
-### Concrete Benefits You'll See Immediately
+**Gathering:** academic search (accurate, slow, pricey), web search (fast, broad,
+uneven), news search (recent, some bias), fact-check (accurate on specific
+claims, narrow).
 
-**Consistency**: Same query + same user values = same tool choice every time
-**Optimality**: Provably best tool selection given user preferences and constraints  
-**Transparency**: Clear mathematical explanation for every tool choice
-**Tunability**: Adjust behavior by modifying weights and parameters
-**Reliability**: No training required, works the same way every time
+**Analysis:** sentiment analysis, citation analysis, bias detection, confidence
+assessment.
 
-### Real-World Impact Example
+**Synthesis:** summarization, cross-reference, synthesis, human consultation
+(most reliable, slowest, most expensive).
 
-**Before (Current AI)**:
-```
-Query: "Find reliable information about COVID-19 vaccines"
-Session 1: Web search → news articles and blog posts
-Session 2: Academic search → peer-reviewed medical studies  
-Session 3: Fact-check service → verification reports
-User Experience: Completely unpredictable quality and type of information
-```
+The whole challenge in one sentence: **given a query, a context, and a user's
+values, which combination of these twelve do you use?** Today's answer is "hope
+the model picks well." Ours is "optimize it."
 
-**After (Static Mathematical Scoring)**:
-```
-Query: "Find reliable information about COVID-19 vaccines"  
-User Values: {accuracy: 0.9, speed: 0.5, safety: 0.95}
-Context: Medical domain, high stakes
-Mathematical Result: Academic search (highest utility given values and context)
-User Experience: Consistently receives peer-reviewed medical information
-```
+### Same query, three different right answers
 
-## The Multi-Tool Research Agent: Our Working Example
+The point of value weights is that there's no single best plan. There's a best
+plan *for this user, in this context*.
 
-### Why This Example Matters
+**A grad student researching a thesis.** Values: accuracy 0.95, speed 0.4, cost
+0.6. Best path: academic search → citation analysis → cross-reference →
+synthesis.
 
-Throughout this course, we'll build a **Multi-Tool Research Agent** that demonstrates mathematical alignment principles. This isn't just a theoretical exercise, it's a practical system you can implement and use.
+**A journalist on deadline.** Values: accuracy 0.7, speed 0.95, cost 0.8. Best
+path: news search → fact-check → quick synthesis.
 
-**Relevance**: Research assistance is a common AI use case where tool selection dramatically affects outcome quality. The principles you learn apply to any multi-tool AI system.
+**A public health official mid-crisis.** Values: accuracy 0.9, speed 0.8, safety
+0.95. Best path: academic search → fact-check → human consultation → synthesis.
 
-### The 12-Tool Research Environment
+Same tools. Three different optimal routes, because the weights differ. No prompt
+tweak gives you that reliably. The math does.
 
-Our agent has access to 12 different research tools, each with distinct capabilities:
+## Do the math yourself
 
-#### Information Gathering Tools
-1. **Academic Search**: High accuracy, slow, expensive, peer-reviewed sources
-2. **Web Search**: Fast, broad coverage, variable quality, current information  
-3. **News Search**: Recent information, moderate speed, potential bias
-4. **Fact Check**: High accuracy for specific claims, slow, limited scope
-
-#### Analysis Tools  
-5. **Sentiment Analysis**: Emotional tone detection, fast, specific use cases
-6. **Citation Analysis**: Source relationship tracking, comprehensive, slow
-7. **Bias Detection**: Objectivity assessment, thorough, specialized
-8. **Confidence Assessment**: Reliability estimation, meta-analysis
-
-#### Synthesis Tools
-9. **Summarization**: Information condensation, fast, potential detail loss
-10. **Cross-Reference**: Connection finding, comprehensive, resource-intensive
-11. **Synthesis**: Integration and analysis, slow, high-value output
-12. **Human Consultation**: Highest reliability, very slow, expensive
-
-### The Tool Selection Challenge
-
-**The Problem**: Given a user query, context, and preferences, which combination of these 12 tools should the agent use?
-
-**Current AI Approach**: Hope the AI makes good choices through training
-**Our Mathematical Approach**: Systematically optimize tool selection
-
-**Example Scenarios**:
-
-**Scenario A**: Graduate student researching for thesis
-- Values: Accuracy=0.95, Speed=0.4, Cost=0.6
-- Optimal Path: Academic Search → Citation Analysis → Cross-Reference → Synthesis
-
-**Scenario B**: Journalist on deadline  
-- Values: Accuracy=0.7, Speed=0.95, Cost=0.8
-- Optimal Path: News Search → Fact Check → Quick Synthesis
-
-**Scenario C**: Public health official during crisis
-- Values: Accuracy=0.9, Speed=0.8, Safety=0.95
-- Optimal Path: Academic Search → Fact Check → Human Consultation → Synthesis
-
-### Mathematical Tool Characterization
-
-Each tool has a **mathematical property vector** that enables systematic comparison:
+Here are two tools, by their property vectors (accuracy, speed, cost_efficiency):
 
 ```
-Tool Properties = [Accuracy, Speed, Cost_Efficiency, Coverage, Reliability, Safety, Specialization]
-
-Academic_Search = [0.95, 0.3, 0.4, 0.6, 0.9, 0.9, 0.8]
-Web_Search = [0.6, 0.9, 0.8, 0.9, 0.6, 0.5, 0.3]  
-Fact_Check = [0.9, 0.4, 0.5, 0.3, 0.95, 0.9, 0.9]
-Human_Consultation = [0.9, 0.1, 0.1, 0.6, 0.95, 1.0, 0.7]
+Academic_Search = [0.95, 0.3, 0.4]
+Web_Search       = [0.6, 0.9, 0.8]
 ```
 
-**Why This Works**: Instead of hoping AI will understand tool trade-offs, we explicitly encode them mathematically.
-
-## The Mathematical Scoring Approach (Module 2 Preview)
-
-### The Basic Scoring Function
-
-**Core Concept**: Calculate a utility score for each tool based on user values and context
+And a user who's leaning fast and cheap:
 
 ```
-Utility(tool) = UserWeights^T × ToolProperties + ContextModifiers
+Values W = [accuracy 0.8, speed 0.6, cost 0.4]
 ```
 
-**Step-by-Step Process**:
-1. **User Value Vector**: Convert user preferences to mathematical weights
-2. **Tool Property Matrix**: Characterize each tool's capabilities mathematically
-3. **Context Adjustments**: Modify scores based on situational factors
-4. **Optimization**: Select tool(s) that maximize utility subject to constraints
+**Pause. Which tool wins?** Most people's gut says "academic, it's more
+accurate." Compute it before you scroll. Utility is `Wᵀ × P(tool)`.
 
-### Simple Example Calculation
+Academic: `0.8×0.95 + 0.6×0.3 + 0.4×0.4 = 0.76 + 0.18 + 0.16 = 1.10`
 
-**User Values**: Accuracy=0.8, Speed=0.6, Cost=0.4
-**Tool Options**: Academic Search vs Web Search
+Web: `0.8×0.6 + 0.6×0.9 + 0.4×0.8 = 0.48 + 0.54 + 0.32 = 1.34`
 
-**Academic Search Calculation**:
-```
-Utility = 0.8×0.95 + 0.6×0.3 + 0.4×0.4 = 0.76 + 0.18 + 0.16 = 1.10
-```
+**Web search wins, 1.34 to 1.10.** For *this* user, who weights speed and cost,
+the "more accurate" tool is the wrong call, and the math says so plainly. That's
+the whole pitch in one calculation: explicit values turn a gut argument into a
+number you can check, defend, and change. Bump that user's accuracy weight to 0.95
+and rerun it. Watch the winner flip.
 
-**Web Search Calculation**:
-```  
-Utility = 0.8×0.6 + 0.6×0.9 + 0.4×0.8 = 0.48 + 0.54 + 0.32 = 1.34
-```
+## What's coming
 
-**Result**: Web Search selected (higher utility for this user's values)
+**Module 2 (static scoring):** you'll implement immediate alignment wins, tool
+characterization, value integration, multi-objective optimization, constraint
+handling. You walk out with a working system that makes consistent, optimal tool
+choices.
 
-### Advanced Features You'll Implement
+**Module 3 (dynamic learning):** you'll build agents that *improve* tool
+selection over time while staying aligned, state-space design, action-space
+optimization, learning with constraints, curriculum training.
 
-**Multi-Objective Optimization**: Handle competing values systematically
-**Constraint Satisfaction**: Respect budget, time, and safety limits  
-**Sequential Planning**: Optimize multi-tool workflows
-**Context Adaptation**: Automatically adjust for domain, stakes, and urgency
-**Uncertainty Handling**: Account for varying tool reliability
+**Module 4 (the algorithms):** the RL methods underneath it all, from Monte Carlo
+and DQN through PPO, GRPO, DPO, and RLVR, plus a capstone that puts the whole
+thing to an honest, measured test.
 
-## What You'll Build in Module 2
+## The takeaways
 
-### Learning Objectives
+- The path is **static → dynamic → curriculum**, and you should start with static.
+  You don't need ML to fix the action-space problem.
+- The **12-tool research agent** is our throughline. The job: pick the right
+  combination for a given query, context, and value set.
+- **The same query has different right answers** for different users. Value
+  weights are what encode that, and a prompt can't do it reliably.
+- The worked example makes it concrete: a speed-weighted user's *best* tool is the
+  "less accurate" one, and the math shows exactly why. Explicit values turn
+  arguments into checkable numbers.
 
-By the end of Module 2, you'll be able to:
-- **Characterize Tools Mathematically**: Convert tool capabilities into property vectors
-- **Integrate User Values**: Transform preferences into mathematical weights  
-- **Implement Scoring Functions**: Calculate optimal tool selections
-- **Handle Constraints**: Respect resource and safety limitations
-- **Optimize Multi-Tool Workflows**: Plan sequences of tool usage
-- **Create Transparent Systems**: Provide clear explanations for tool choices
+## Next
 
-### Practical Deliverables
-
-**Core Scoring System**: Working implementation that makes consistent tool choices
-**User Interface**: Way for users to specify values and see tool selection reasoning
-**Evaluation Framework**: Methods to measure improvement over current approaches
-**Integration Guide**: How to plug mathematical scoring into existing AI systems
-
-### Real-World Applications
-
-The frameworks you'll learn in Module 2 apply immediately to:
-- **Customer Service AI**: Choosing between knowledge base, human escalation, automated responses
-- **Content Creation AI**: Selecting research sources, fact-checking tools, synthesis methods
-- **Business Intelligence AI**: Optimizing data source selection for analysis queries
-- **Educational AI**: Picking appropriate resources for different learning objectives
-
-## The Learning Progression: Building Systematic Understanding
-
-### Module 2: Static Mathematical Foundations
-
-**Core Question**: How do we make optimal tool choices using mathematical optimization?
-
-**Key Concepts**:
-- Tool property vectors and mathematical characterization
-- User value integration and weight learning
-- Multi-objective optimization under constraints  
-- Transparency and explainability in decision-making
-
-**Outcome**: Reliable, consistent, optimal tool selection that users can understand and trust
-
-### Module 3A-3B: State and Action Space Design
-
-**Core Question**: How do we structure the decision-making environment for learning systems?
-
-**Key Concepts**:
-- Alignment-complete state representations
-- Action spaces with value separability
-- Mathematical properties that enable learning
-- Hidden information and partial observability
-
-**Outcome**: Proper foundations for learning systems that maintain alignment
-
-### Module 3C-3D: Stochastic Rewards and Trajectories  
-
-**Core Question**: How do we learn optimal behavior under uncertainty while maintaining alignment?
-
-**Key Concepts**:
-- Stochastic reward modeling for robustness
-- Trajectory-level alignment constraints
-- Sequential decision-making with value consistency
-- Learning from uncertain feedback
-
-**Outcome**: Adaptive systems that improve while maintaining value alignment
-
-### Module 3E-3F: Policy Integration and Curriculum Learning
-
-**Core Question**: How do we systematically build alignment capabilities that scale to complex real-world scenarios?
-
-**Key Concepts**:
-- Value-weighted policy architectures
-- Progressive curriculum design
-- Transfer learning with alignment preservation
-- Robustness to adversarial conditions
-
-**Outcome**: Sophisticated systems that maintain alignment across diverse, challenging scenarios
-
-## Implementation Strategy: Start Simple, Scale Systematically
-
-### Phase 1: Proof of Concept (Module 2)
-**Goal**: Demonstrate immediate value with mathematical scoring
-**Timeline**: 1-4 weeks
-**Scope**: Single-tool selection for defined use cases
-**Success Metric**: Consistent, explainable tool choices that outperform current approaches
-
-### Phase 2: Production Deployment (Module 3A-3D)
-**Goal**: Scale to full multi-tool workflows with learning capabilities  
-**Timeline**: 2-6 months
-**Scope**: Complete research agent with adaptive optimization
-**Success Metric**: System that improves performance while maintaining alignment
-
-### Phase 3: Advanced Capabilities (Module 3E-3F)
-**Goal**: Robust alignment across diverse, challenging scenarios
-**Timeline**: 6-18 months  
-**Scope**: Curriculum-trained systems ready for high-stakes deployment
-**Success Metric**: Adversarially robust systems that maintain alignment under pressure
-
-## Common Implementation Challenges and Solutions
-
-### Challenge 1: "Users can't specify their values precisely"
-
-**Solution Preview (Module 2)**: 
-- Start with reasonable defaults based on context
-- Learn values from user behavior and feedback
-- Provide intuitive interfaces for value specification
-- Use implicit signals (urgency, domain, query type) to infer values
-
-### Challenge 2: "Tools are hard to characterize mathematically"
-
-**Solution Preview (Module 2)**:
-- Begin with simple property vectors, add complexity gradually
-- Use empirical testing to validate tool characterizations
-- Allow for uncertainty and confidence intervals in tool properties
-- Build characterization through usage data and performance metrics
-
-### Challenge 3: "Context is too complex to model"
-
-**Solution Preview (Module 3)**:
-- Start with basic context factors (domain, urgency, stakes)
-- Use hierarchical models to break complex contexts into components
-- Learn context representations through machine learning
-- Provide manual override capabilities for edge cases
-
-### Challenge 4: "Mathematical approaches are too rigid"
-
-**Solution Preview (All Modules)**:
-- Mathematical frameworks can encode any level of flexibility desired
-- User can adjust weights and parameters to change behavior
-- System can learn and adapt mathematical parameters over time
-- Flexibility through systematic parameterization is more reliable than implicit flexibility
-
-## Where These Domains Need Mathematical Alignment
-
-The four domains below are where inconsistent AI decision-making carries the
-highest documented stakes (see Module 1B for the sourced evidence). In each,
-the value-weighted scoring approach maps cleanly onto the domain's real
-trade-off structure:
-
-### Healthcare AI
-
-**The stakes**: Diagnostic support tools whose recommendations vary across
-identical presentations undermine clinical adoption, accuracy and safety
-must dominate speed in the value weights, with the weighting *auditable* for
-regulators.
-
-### Financial Services
-
-**The stakes**: Research and recommendation systems must encode client risk
-tolerance explicitly; a system that implicitly resolves the
-aggressive-vs-conservative trade-off differently per session is a compliance
-liability, not an assistant (Module 2's worked example builds exactly this
-system).
-
-### Legal Research
-
-**The stakes**: The 1,300+ documented court cases involving AI-hallucinated
-citations (Module 1B) all share one root cause, no explicit
-credibility/verification weighting in how sources were selected and used.
-
-### Educational Technology
-
-**The stakes**: Source-selection appropriateness depends on student level, a context variable that must enter the scoring function explicitly, or the
-same query from a ninth-grader and a doctoral student gets the same sources.
-
-**An honest caveat**: these are *arguments from problem structure*, not
-measured deployment results of this course's framework. When you implement
-the Module 2 system, you will measure its effect on consistency and decision
-quality yourself, that measurement discipline, not promised percentages, is
-what distinguishes engineering from marketing.
-
-## Setting Expectations: What Module 2 Will Deliver
-
-### Immediate Capabilities
-
-**Day 1**: Understanding of mathematical alignment principles
-**Week 1**: Working mathematical scoring system for simple tool selection
-**Week 2**: Multi-objective optimization with constraint handling
-**Week 3**: Context-aware scoring with user value integration
-**Week 4**: Complete system ready for production testing
-
-### Technical Skills You'll Develop
-
-**Mathematical Modeling**: Convert real-world problems into optimization problems
-**Multi-Objective Optimization**: Balance competing values systematically
-**Constraint Programming**: Handle resource and safety limitations
-**System Design**: Build modular, extensible alignment frameworks
-**Evaluation Methods**: Measure and validate alignment improvements
-
-### Business Skills You'll Develop
-
-**Measurement Design**: Define and instrument the metrics that show whether alignment improvements worked
-**User Research**: Understand and model user value preferences
-**Change Management**: Transition organizations from inconsistent to systematic AI
-**Risk Assessment**: Identify and mitigate alignment failure modes
-
-## Call to Action: Why Start Now
-
-### The Urgency
-
-**Current State**: Most AI projects fail (RAND: >80%; MIT: ~95% of GenAI pilots show no P&L impact, see Module 1B), overwhelmingly for measurement and objective reasons rather than capability reasons
-**Opportunity Window**: Systematic approaches exist but most deployments don't use them
-**Competitive Reality**: The organizations in MIT's successful 5% treated deployment as a measurement problem, that discipline is learnable
-**Technical Readiness**: Tools and frameworks are mature enough for production use
-
-### The Path is Clear
-
-**Module 2** provides immediately implementable solutions that deliver real value
-**Module 3** scales these solutions to sophisticated learning systems
-**The frameworks** are proven in multiple domains and organizations
-
-### Your Next Step
-
-**Module 2 awaits**: Practical, hands-on implementation of mathematical alignment that you can deploy immediately to solve real problems and deliver measurable value.
-
-**The transition** from theoretical understanding to practical implementation starts now.
-
-## Conclusion: From Problem to Solution
-
-### What We've Established
-
-**The Problem** (Modules 1A-1B): Current AI fails at systematic action selection, causing billions in costs and lost opportunities
-
-**The Solution Framework** (Module 1C): Mathematical approaches that make AI action selection predictable, optimal, and transparent  
-
-**The Implementation Path** (Module 1D): Progressive approach starting with immediately valuable static scoring
-
-### What Comes Next
-
-**Module 2**: You'll implement your first mathematical alignment system and see immediate improvements in AI consistency and performance
-
-**The Goal**: Transform unreliable AI into trustworthy tools that users can depend on for important decisions
-
-**The Impact**: Enable AI deployment in high-stakes domains currently limited by alignment concerns
-
-### The Journey Begins
-
-You now understand why mathematical alignment is necessary, what it looks like in practice, and how to implement it systematically. 
-
-**Module 2 starts your journey** from theory to practice, from problems to solutions, from hoping AI will work to ensuring it works mathematically.
-
-**Ready to build AI systems that users can actually trust?**
-
-**Module 2: Static Mathematical Scoring for AI Agent Alignment awaits.**
+Module 2 gets your hands dirty. You'll build the static scoring system end to end,
+the first working piece of a mathematically aligned agent.

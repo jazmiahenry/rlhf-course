@@ -1,482 +1,214 @@
 # Module 1C: The Mathematical Solution Framework
 
-## Introduction: From Problems to Systematic Solutions
+> **What you'll get out of this:** the shift from "hope the AI chooses well" to
+> "make it an optimization problem," and the three pieces you need to actually do
+> that.
 
-In Modules 1A and 1B, we've established two critical points:
+## Where we are
 
-1. **The Core Problem**: Current AI systems excel at understanding what users want (state space) but fail at systematically choosing what to do (action space)
+Two things are nailed down so far. From 1A: AI understands what you want (state
+space) but has no systematic way to choose what to do (action space). From 1B:
+that failure shows up as a >80% project-failure rate and a stack of documented
+costs.
 
-2. **The High Stakes**: This failure shows up as the >80% project-failure rate documented in Module 1B, erodes trust, limits AI adoption, and will only get worse as AI systems become more complex
+Now the turn. We stop hoping and start optimizing.
 
-Now we turn to the solution: **mathematical frameworks that make AI action selection systematic, predictable, and optimal**.
+## The one idea: alignment as optimization
 
-This module introduces the conceptual foundation for systematic alignment, explains why mathematical approaches succeed where ad-hoc methods fail, and previews the practical frameworks you'll learn to implement in subsequent modules.
+Here's the whole move in two lines.
 
-## The Fundamental Insight: Alignment as Optimization
+- **Today:** hope the model makes good choices through training and prompting.
+- **Instead:** *ensure* good choices by solving an optimization problem.
 
-### Moving Beyond Hope-Based Engineering
+Treat action selection not as an emergent property you cross your fingers for,
+but as a thing you compute. Formally:
 
-**Current Approach**: Hope that AI will make good choices through training and prompting
-
-**Mathematical Approach**: Ensure AI makes good choices through systematic optimization
-
-The key insight is treating action selection not as an emergent property to be hoped for, but as an **optimization problem to be solved mathematically**.
-
-### The Action Selection Optimization Problem
-
-**Formal Problem Statement**:
 ```
 Given:
-- A set of available tools A = {a₁, a₂, ..., aₙ}
-- User values and preferences V = {v₁, v₂, ..., vₘ}  
-- Current context and constraints C
-- Tool properties and capabilities P(a)
+  tools         A = {a₁, ..., aₙ}
+  user values   V = {v₁, ..., vₘ}
+  context       C
+  tool props    P(a)
 
 Find:
-- Optimal action a* that maximizes user value subject to constraints
-
-Mathematically:
-a* = argmax_a ∑ᵢ wᵢ · vᵢ(a, C) subject to constraints(a, C)
+  a* = argmax_a  Σᵢ wᵢ · vᵢ(a, C)   subject to constraints(a, C)
 ```
 
-This transforms action selection from arbitrary choice to systematic optimization.
+That's it. "Pick the action that maximizes weighted user value, subject to your
+constraints." Everything else in this lesson is the three pieces that make that
+line real.
 
-## The Three Pillars of Mathematical Alignment
+## The three pillars
 
-### Pillar 1: Explicit Tool Characterization
+### Pillar 1: say what each tool actually does
 
-**Problem with Current Systems**: Tools are implicitly understood through training patterns
+Right now, tools are "understood" implicitly through training patterns. You can't
+inspect that, and you can't optimize over it. So make it explicit: give every
+tool a **property vector**.
 
-**Mathematical Solution**: Explicit mathematical characterization of what each tool can do
-
-**Tool Property Vector**:
 ```
 P(tool) = [accuracy, speed, cost_efficiency, coverage, reliability, safety, specialization]
-```
 
-Every dimension points the same direction, higher is better, so the
-weighted sum below rewards desirable properties consistently. (We encode
-cost as cost-*efficiency* rather than raw cost for exactly this reason.)
-
-**Example**: Research Tools
-```
 P(academic_search) = [0.95, 0.3, 0.4, 0.6, 0.9, 0.9, 0.8]
-P(web_search) = [0.6, 0.9, 0.8, 0.9, 0.6, 0.5, 0.3]
-P(fact_check) = [0.9, 0.4, 0.5, 0.3, 0.95, 0.9, 0.9]
+P(web_search)       = [0.6, 0.9, 0.8, 0.9, 0.6, 0.5, 0.3]
+P(fact_check)       = [0.9, 0.4, 0.5, 0.3, 0.95, 0.9, 0.9]
 ```
 
-**Benefits**:
-- **Predictable**: Same tool properties every time
-- **Comparable**: Can systematically evaluate trade-offs between tools
-- **Optimizable**: Can mathematically select best tool for given context
+Notice every dimension points the same way: higher is better. (That's why we
+encode cost as cost-*efficiency*, not raw cost.) Now the weighted sum below
+rewards good properties consistently, tools are comparable, and "best tool for
+this context" becomes a calculation instead of a vibe.
 
-### Pillar 2: Mathematical Value Integration
+### Pillar 2: turn the user's values into numbers
 
-**Problem with Current Systems**: User values are captured in natural language but not mathematically integrated into decision-making
+User values live in natural language, which the decision process can't act on.
+So convert preferences into **weights**:
 
-**Mathematical Solution**: Convert user preferences into mathematical weights that guide tool selection
-
-**Value Weight Vector**:
 ```
 W(user) = [w_accuracy, w_speed, w_cost, w_coverage, w_reliability, w_safety, w_specialization]
 ```
 
-**Context-Dependent Weighting**:
+And because values shift with context, let context bump them:
+
 ```
 W(user, context) = W_base(user) + context_modifiers(context)
 ```
 
-**Example**: Medical Query Context
+A medical query, for example, should crank up accuracy and safety:
+
 ```
-W_base = [0.8, 0.5, 0.6, 0.7, 0.8, 0.9, 0.7]  // User's general preferences
-context_medical = [+0.15, -0.1, 0, 0, +0.1, +0.05, +0.2]  // Medical context adjustments
-W_final = [0.95, 0.4, 0.6, 0.7, 0.9, 0.95, 0.9]  // Higher accuracy and safety for medical
-```
-
-**Benefits**:
-- **Personalized**: Reflects individual user priorities
-- **Contextual**: Adapts to different situations appropriately
-- **Transparent**: Clear mathematical rationale for decisions
-
-### Pillar 3: Systematic Optimization
-
-**Problem with Current Systems**: No systematic method for choosing optimal tools given values and constraints
-
-**Mathematical Solution**: Optimization algorithms that find best tool choices mathematically
-
-**Basic Optimization**:
-```
-utility(tool) = W^T × P(tool)
-optimal_tool = argmax_tool utility(tool)
+W_base          = [0.8, 0.5, 0.6, 0.7, 0.8, 0.9, 0.7]
+context_medical = [+0.15, -0.1, 0, 0, +0.1, +0.05, +0.2]
+W_final         = [0.95, 0.4, 0.6, 0.7, 0.9, 0.95, 0.9]
 ```
 
-**Constrained Optimization**:
-```
-maximize: W^T × P(tool)
-subject to: cost(tool) ≤ budget
-           time(tool) ≤ deadline
-           safety(tool) ≥ safety_threshold
-```
+Now the same framework behaves differently in different situations, *on purpose*,
+with a clear rationale you can point at.
 
-**Multi-Tool Optimization**:
+### Pillar 3: actually optimize
+
+With tools and values both numeric, selection is a dot product:
+
 ```
-maximize: ∑ᵢ utility(toolᵢ) - interaction_costs(tool_sequence)
-subject to: ∑ᵢ cost(toolᵢ) ≤ total_budget
-           sequence_time ≤ deadline
-           consistency(tool_sequence) ≥ threshold
+utility(tool) = Wᵀ × P(tool)
+best_tool      = argmax_tool utility(tool)
 ```
 
-## Types of Mathematical Alignment
+Add the real-world limits as constraints:
 
-### 1. Static Alignment: Mathematical Scoring Functions
-
-**Concept**: Use mathematical formulas to score tool appropriateness for each query
-
-**Approach**:
 ```
-score(tool, query, user_values, context) = 
-    relevance(tool, query) × 
-    value_match(tool, user_values) × 
-    context_appropriateness(tool, context) ×
-    constraint_satisfaction(tool, constraints)
+maximize:    Wᵀ × P(tool)
+subject to:  cost(tool) ≤ budget
+             time(tool) ≤ deadline
+             safety(tool) ≥ safety_threshold
 ```
 
-**Characteristics**:
-- **Immediate**: Works instantly without training
-- **Transparent**: Clear mathematical reasoning
-- **Tunable**: Can adjust weights and formulas
-- **Robust**: Consistent behavior across contexts
+And for multi-tool plans, optimize the sequence while accounting for how tools
+interact (and stay consistent):
 
-**Best For**: Immediate deployment, interpretable systems, domains with clear value hierarchies
-
-### 2. Dynamic Alignment: Learning-Based Optimization
-
-**Concept**: Use machine learning to optimize tool selection over time while maintaining value alignment
-
-**Approach**:
 ```
-Q(state, action) = learned value of taking action in state
-π(action|state) = policy that balances learned value with alignment constraints
-alignment_constraint: ∑ᵢ wᵢ × valueᵢ(action) ≥ threshold
+maximize:    Σᵢ utility(toolᵢ) − interaction_costs(sequence)
+subject to:  Σᵢ cost(toolᵢ) ≤ total_budget
+             sequence_time   ≤ deadline
+             consistency(sequence) ≥ threshold
 ```
 
-**Characteristics**:
-- **Adaptive**: Improves with experience
-- **Sophisticated**: Handles complex trade-offs
-- **Context-sensitive**: Learns situational appropriateness
-- **Scalable**: Can handle large numbers of tools and contexts
-
-**Best For**: Complex domains, evolving requirements, large-scale deployment
-
-### 3. Curriculum Alignment: Progressive Learning
-
-**Concept**: Train AI systems to maintain alignment while gradually handling more complex scenarios
-
-**Approach**:
-```
-Stage 1: Simple choices with clear value trade-offs
-Stage 2: Multi-tool sequences with consistency requirements
-Stage 3: Complex contexts with dynamic constraints
-Stage 4: Adversarial conditions with robustness requirements
-```
-
-**Characteristics**:
-- **Systematic**: Builds alignment capabilities progressively
-- **Robust**: Handles edge cases and adversarial conditions
-- **Transferable**: Alignment principles generalize across domains
-- **Verifiable**: Clear progression metrics and testing
-
-**Best For**: High-stakes domains, long-term deployment, systems requiring robust alignment
-
-## The Mathematical Advantage: Why This Works
-
-### Advantage 1: Predictability Through Formalization
-
-**Problem with Current Systems**: Implicit decision-making leads to unpredictable behavior
-
-**Mathematical Solution**: Explicit formulas produce predictable outcomes
-
-**Example**:
-```
-Current System: "Be helpful and accurate" → unpredictable tool choice
-Mathematical System: W^T × P(tool) → deterministic selection based on values
-```
-
-**Result**: Same inputs always produce same outputs (unless learning is explicitly enabled)
-
-### Advantage 2: Optimality Through Systematic Search
-
-**Problem with Current Systems**: No guarantee that chosen tools are best for user needs
-
-**Mathematical Solution**: Optimization algorithms find provably best choices
-
-**Example**:
-```
-Current System: Random choice among reasonable tools
-Mathematical System: Finds tool that maximizes utility subject to constraints
-```
-
-**Result**: Demonstrably better outcomes for users
-
-### Advantage 3: Transparency Through Explicit Reasoning
-
-**Problem with Current Systems**: Users and developers cannot understand why tools were chosen
-
-**Mathematical Solution**: Clear mathematical rationale for every decision
-
-**Example**:
-```
-Tool Selection Explanation:
-"Selected academic_search because:
-- Your accuracy weight (0.9) × academic accuracy (0.95) = 0.855
-- Your speed weight (0.4) × academic speed (0.3) = 0.12
-- Total utility: 0.975 (highest among available tools)
-- Constraint satisfaction: Budget OK, time acceptable for query importance"
-```
-
-**Result**: Explainable AI that users can understand and trust
-
-### Advantage 4: Adaptability Through Parameter Tuning
-
-**Problem with Current Systems**: Difficult to adjust behavior without retraining
-
-**Mathematical Solution**: Behavior modification through parameter adjustment
-
-**Example**:
-```
-To make system faster: Increase w_speed in value weight vector
-To make system more conservative: Increase safety constraint thresholds
-To optimize for new domain: Adjust tool property vectors
-```
-
-**Result**: Rapid adaptation without expensive retraining
-
-### Advantage 5: Composability Through Modular Design
-
-**Problem with Current Systems**: Difficult to combine multiple AI capabilities systematically
-
-**Mathematical Solution**: Modular frameworks that compose predictably
-
-**Example**:
-```
-Tool Selection Module: Chooses optimal tools
-Value Integration Module: Incorporates user preferences  
-Constraint Module: Enforces safety and resource limits
-Learning Module: Improves performance over time
-```
-
-**Result**: Systems that can be built incrementally and combined flexibly
-
-## Addressing Common Objections
-
-### Objection 1: "Mathematical approaches are too rigid"
-
-**Response**: Mathematical frameworks can encode flexibility systematically
-
-**Example**: Context-dependent value weights allow the same mathematical framework to behave differently in different situations while maintaining consistency within each context.
-
-**Evidence**: Mathematical optimization is used successfully in domains requiring flexibility (financial trading, resource allocation, logistics)
-
-### Objection 2: "Users can't specify their values precisely"
-
-**Response**: Mathematical frameworks can learn and infer user values from behavior
-
-**Approaches**:
-- **Preference Learning**: Infer values from user choices and feedback
-- **Default Profiles**: Start with reasonable defaults, adjust based on usage
-- **Implicit Signaling**: Extract value weights from context and query patterns
-
-**Example**: If user consistently chooses faster results over comprehensive ones, system increases w_speed automatically
-
-### Objection 3: "Real-world contexts are too complex for mathematical modeling"
-
-**Response**: Mathematical frameworks can be as complex as needed while remaining systematic
-
-**Approaches**:
-- **Hierarchical Models**: Break complex contexts into manageable components
-- **Machine Learning Integration**: Use ML to handle complex pattern recognition within mathematical frameworks
-- **Adaptive Complexity**: Start simple, add complexity as needed
-
-**Example**: Medical AI can have different mathematical models for emergency, routine, and research contexts
-
-### Objection 4: "Mathematical approaches are harder to implement"
-
-**Response**: Initial implementation effort pays for itself through reduced maintenance and better performance
-
-**Cost-Benefit Analysis**:
-- **Upfront Cost**: Higher development time for mathematical framework
-- **Ongoing Cost**: Lower maintenance, less prompt engineering, fewer edge cases
-- **Performance Benefit**: Better user outcomes, higher adoption, reduced support costs
-- **ROI**: Depends on your verification-cost baseline -- measure it (see the economic-case section below)
-
-## Implementation Spectrum: From Simple to Sophisticated
-
-### Level 1: Basic Mathematical Scoring (Module 2)
-
-**Concept**: Simple weighted scoring functions for tool selection
-
-**Implementation Time**: 1-2 weeks
-**Complexity**: Low
-**Benefits**: Immediate consistency improvement
-**Best For**: Quick wins, proof of concept
-
-**Example**:
-```python
-def score_tool(tool_properties, user_weights, context):
-    base_score = np.dot(user_weights, tool_properties)
-    context_modifier = calculate_context_modifier(tool, context)
-    return base_score * context_modifier
-```
-
-### Level 2: Dynamic Learning Systems (Module 3A-3D)
-
-**Concept**: Machine learning optimization with alignment constraints
-
-**Implementation Time**: 2-3 months
-**Complexity**: Medium
-**Benefits**: Adaptive improvement, sophisticated trade-offs
-**Best For**: Production systems, complex domains
-
-**Example**:
-```python
-class AlignedAgent:
-    def select_action(self, state):
-        q_values = self.compute_q_values(state)
-        alignment_scores = self.compute_alignment(state, actions)
-        return self.optimize_with_constraints(q_values, alignment_scores)
-```
-
-### Level 3: Curriculum Learning Systems (Module 3E-3F)
-
-**Concept**: Progressive training with alignment guarantees
-
-**Implementation Time**: 3-6 months  
-**Complexity**: High
-**Benefits**: Robust alignment, handles adversarial conditions
-**Best For**: High-stakes domains, long-term deployment
-
-**Example**:
-```python
-class CurriculumAlignedAgent:
-    def train_stage(self, stage_config):
-        while not self.meets_advancement_criteria(stage_config):
-            self.train_with_alignment_constraints(stage_config)
-        self.advance_to_next_stage()
-```
-
-## Success Metrics for Mathematical Alignment
-
-### Quantitative Metrics
-
-**Consistency**: Variance in tool selection for identical queries
-- Target: <5% variance in tool choice for same context and values
-- Measurement: Standard deviation of tool selection across repeated queries
-
-**Optimality**: Distance from theoretical optimum given constraints
-- Target: >90% of theoretical maximum utility
-- Measurement: Comparison with brute-force optimal selection
-
-**Transparency**: Explainability of tool selection decisions
-- Target: >95% of decisions explainable through mathematical reasoning
-- Measurement: Automated verification of decision rationale
-
-**Adaptability**: Speed of adaptation to changing user preferences
-- Target: <24 hours to adapt to significant preference changes
-- Measurement: Time from preference change to stable new behavior
-
-### Qualitative Metrics
-
-**User Trust**: Confidence in AI decision-making
-- Measurement: User satisfaction surveys, adoption rates
-- Target: >80% user confidence in AI tool choices
-
-**Developer Productivity**: Effort required to maintain and improve system
-- Measurement: Time spent on prompt engineering, edge case handling
-- Target: 70% reduction in maintenance effort vs. current approaches
-
-**Business Value**: Impact on organizational objectives
-- Measurement: Task completion rates, outcome quality, cost efficiency
-- Target: 2x improvement in effective AI utility
-
-## The Economic Case for Mathematical Alignment
-
-### Why the Investment Logic Favors Explicit Frameworks
-
-Costs and returns vary enormously by organization, so we won't invent
-numbers, but the *structure* of the economics is consistent:
-
-**Where the cost goes**: Explicit frameworks front-load effort (value
-elicitation, tool characterization, scoring design) that implicit
-prompt-engineering approaches defer, and then pay for repeatedly in
-maintenance, incident response, and re-prompting whack-a-mole.
-
-**Where the return comes from**: Every failure category documented in
-Module 1B is a recurring operating cost, human verification of inconsistent
-outputs, professional liability exposure, abandoned deployments (RAND's >80%
-failure rate is mostly *sunk* development cost). A framework that makes
-decisions consistent and measurable attacks the recurring costs directly.
-
-**The measurement requirement**: Whether *your* implementation pays back is
-an empirical question, which is why the success metrics above (consistency
-variance, utility capture, explainability rate) are defined before any code
-is written. If you cannot measure the improvement, you cannot claim it.
-
-### Competitive Advantage
-
-**Early Mover Benefits**:
-- Reliability differentiation while most deployments remain unmeasured (MIT's GenAI Divide: ~95% of pilots show no measurable impact)
-- Access to high-stakes customers requiring reliable AI
-- Premium pricing for predictable, explainable AI services
-
-**Market Reality**: Mathematical alignment is becoming a competitive requirement, not an optional enhancement
-
-## Preview: The Implementation Path
-
-### Module 2: Static Mathematical Scoring
-
-**What You'll Learn**: How to implement immediate alignment improvements using mathematical scoring functions
-
-**Key Concepts**:
-- Tool property characterization
-- User value integration  
-- Multi-objective optimization
-- Constraint handling
-
-**Outcome**: Working system that makes consistent, optimal tool choices
-
-### Module 3: Dynamic Learning Systems
-
-**What You'll Learn**: How to build AI systems that improve tool selection over time while maintaining alignment
-
-**Key Concepts**:
-- State space design for alignment
-- Action space optimization
-- Learning with constraints
-- Curriculum training
-
-**Outcome**: Adaptive system that gets better at alignment over time
-
-## Conclusion: From Theory to Practice
-
-### The Transformation
-
-Mathematical alignment transforms AI systems from:
-- **Unpredictable** → **Systematic**
-- **Arbitrary** → **Optimal**  
-- **Opaque** → **Transparent**
-- **Static** → **Adaptive**
-- **Unreliable** → **Trustworthy**
-
-### The Opportunity
-
-We stand at a critical moment where:
-- **The problems** with current AI alignment are clear and costly
-- **The mathematical tools** for systematic solutions exist
-- **The economic incentives** for implementation are compelling
-- **The competitive advantages** for early movers are substantial
-
-### Next Steps
-
-In Module 1D, we'll outline the specific path from current problems to mathematical solutions. We'll introduce the multi-tool research agent that serves as our working example throughout the course and preview the practical frameworks you'll learn to implement.
-
-**Key Insight**: Mathematical alignment is not just academically interesting, it's the practical answer to the documented failure pattern from Module 1B: most AI projects fail for objective- and measurement-shaped reasons, exactly the gap explicit frameworks close. The frameworks exist; what's needed now is systematic implementation.
+## Three flavors of this, easy to hard
+
+You'll meet all three later. Here's the map so you know where you're headed.
+
+**Static scoring (Module 2).** Mathematical formulas that score each tool. No
+training, works instantly, fully transparent and tunable. Best for getting
+consistency *now* and for domains with a clear value hierarchy.
+
+**Dynamic learning (Modules 3A-3D).** Machine learning that optimizes tool
+selection over time while honoring alignment constraints. Adapts, handles subtle
+trade-offs, scales. Best for production systems in complex domains.
+
+**Curriculum learning (Modules 3E-3F).** Progressive training that builds robust
+alignment from simple cases up to adversarial ones. Best for high-stakes, long-
+horizon deployments. (You'll see in the RL capstone exactly when this pays off,
+and when it doesn't.)
+
+## Why the math actually helps
+
+Five payoffs, fast:
+
+1. **Predictable.** `Wᵀ × P(tool)` gives the same answer for the same inputs.
+   "Be helpful and accurate" doesn't.
+2. **Optimal.** You select the tool that maximizes utility under constraints,
+   instead of a reasonable-looking random pick.
+3. **Transparent.** Every choice comes with a receipt: *"academic_search won
+   because your accuracy weight 0.9 × its accuracy 0.95 = 0.855, highest total
+   utility, and it satisfies your budget."*
+4. **Tunable.** Want it faster? Raise `w_speed`. More cautious? Tighten the safety
+   threshold. New domain? Adjust the tool vectors. No retraining.
+5. **Composable.** Tool selection, value integration, constraints, and learning
+   are separate modules you can build incrementally and recombine.
+
+## Two objections worth answering
+
+**"This is too rigid."** It isn't. Context-dependent weights let one framework
+behave differently across situations while staying consistent *within* each one.
+Mathematical optimization runs the least-rigid industries on earth: trading,
+logistics, resource allocation.
+
+**"Users can't state their values precisely."** They don't have to. You infer
+values from behavior (preference learning), start from sensible defaults and
+adjust, or read them from context. If a user keeps choosing fast over thorough,
+`w_speed` goes up on its own. (Module 3E builds exactly this.)
+
+## What to measure (and an honest note on it)
+
+People love to slap precise targets on this ("cut variance to under 5%, hit 2x
+utility"). We won't invent numbers, because the right targets depend entirely on
+your baseline. What *is* stable is the set of dimensions worth measuring:
+
+- **Consistency:** variance in tool choice for identical queries. Lower is better.
+- **Optimality:** how close you get to the best possible choice under constraints.
+- **Transparency:** the fraction of decisions you can explain from the math.
+- **Adaptability:** how fast the system tracks a real change in preferences.
+- **Trust and productivity:** adoption, and how much prompt-engineering whack-a-mole
+  you stop doing.
+
+> **The rule, restated:** if you can't measure the improvement, you can't claim
+> it. Define these before you write code.
+
+## The economics, without made-up ROI
+
+Costs and returns vary wildly by org, so here's the *structure* instead of fake
+figures.
+
+**Where the cost goes:** explicit frameworks front-load work, value elicitation,
+tool characterization, scoring design, that prompt-engineering defers. Then the
+prompt approach pays for that deferral repeatedly, in maintenance, incidents, and
+re-prompting.
+
+**Where the return comes from:** every failure shape in 1B is a *recurring*
+operating cost, human verification of inconsistent output, liability exposure,
+abandoned deployments (RAND's >80% failure rate is mostly sunk development cost).
+A framework that makes decisions consistent and measurable attacks those recurring
+costs head-on.
+
+**The early-mover edge:** reliability is a real differentiator while most
+deployments stay unmeasured (MIT: ~95% of pilots show no measurable impact). It
+buys access to high-stakes customers and supports premium pricing for predictable,
+explainable AI.
+
+## The takeaways
+
+- The core move: treat action selection as **optimization**,
+  `a* = argmax Σ wᵢ vᵢ`, not as something to hope for.
+- It takes **three pillars**: explicit tool properties, numeric value weights, and
+  an optimizer with constraints.
+- It comes in three flavors, **static → dynamic → curriculum**, easy to hard,
+  mapped to Modules 2, 3, and beyond.
+- The payoffs are **predictable, optimal, transparent, tunable, composable**
+  behavior.
+- **Measure before you claim.** Define consistency, optimality, transparency, and
+  adaptability up front. No invented targets.
+
+## Next
+
+Module 1D turns this framework into a roadmap, lays out the implementation path,
+and introduces the 12-tool research agent we build on for the rest of the course.
