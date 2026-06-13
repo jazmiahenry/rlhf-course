@@ -1,358 +1,234 @@
-# Module 3A: State Spaces and Observability for Alignment
-
-## Introduction: The Foundation of Environmental Understanding
-
-In reinforcement learning, an agent's ability to make aligned decisions fundamentally depends on what information it can observe about its environment. The **state space** defines the complete set of environmental configurations the agent can perceive and reason about. For alignment, this isn't just about having enough information to perform well—it's about having the right information to maintain human values consistently.
-
-**The Core Challenge**: An agent can only be as aligned as its state representation allows. If critical alignment information is missing from the state, even the most sophisticated learning algorithms cannot develop truly aligned behavior.
-
-This lesson explores the mathematical foundations of state space design for alignment, with particular focus on what makes a state representation sufficient for maintaining human values in complex, partially observable environments.
-
-## Mathematical Definition of State Spaces
-
-### Basic State Space Structure
-
-A **state space** S represents all possible configurations of the environment that the agent can observe. Mathematically:
-
-$$S = \{s_1, s_2, ..., s_m\}$$
-
-for discrete spaces, or:
-
-$$S \subseteq \mathbb{R}^d$$
-
-for continuous representations, where $d$ is the dimensionality of the state representation.
-
-### The Multi-Dimensional Alignment State
-
-For our research assistant agent, the state must capture multiple dimensions of information simultaneously to enable aligned decision-making:
-
-$$s = [s_{\text{problem}}, s_{\text{context}}, s_{\text{history}}, s_{\text{resources}}, s_{\text{constraints}}]$$
-
-Let's examine each component:
-
-**Problem State ($s_{\text{problem}}$)**:
-$$s_{\text{problem}} = [\text{query\_type}, \text{complexity\_level}, \text{domain}, \text{stakeholders}]$$
-
-This captures what the agent is trying to solve:
-- `query_type`: factual, controversial, time-sensitive, deep analysis
-- `complexity_level`: simple lookup, multi-source synthesis, expert-level analysis
-- `domain`: technology, politics, science, health, etc.
-- `stakeholders`: who will be affected by the research outcomes
-
-**Context State ($s_{\text{context}}$)**:
-$$s_{\text{context}} = [\text{time\_pressure}, \text{quality\_requirements}, \text{user\_expertise}, \text{urgency\_level}]$$
-
-This captures the situational constraints:
-- `time_pressure`: immediate (seconds), urgent (minutes), standard (hours), extended (days)
-- `quality_requirements`: preliminary, standard, publication-ready, legal-standard
-- `user_expertise`: novice, intermediate, expert, domain specialist
-- `urgency_level`: routine, important, critical, emergency
-
-**History State ($s_{\text{history}}$)**:
-$$s_{\text{history}} = [a_{t-k}, ..., a_{t-1}, r_{t-k}, ..., r_{t-1}, \text{outcome}_{t-k}, ..., \text{outcome}_{t-1}]$$
-
-This captures what has happened recently:
-- Previous tool selections and their outcomes
-- Quality of information gathered so far
-- User satisfaction with previous interactions
-- Patterns of successful/failed approaches
-
-**Resource State ($s_{\text{resources}}$)**:
-$$s_{\text{resources}} = [\text{budget\_remaining}, \text{time\_remaining}, \text{tool\_availability}, \text{api\_limits}]$$
-
-This captures available capabilities:
-- `budget_remaining`: computational cost units available
-- `time_remaining`: deadline constraints
-- `tool_availability`: which tools are currently accessible
-- `api_limits`: rate limits, quota restrictions, service availability
-
-**Constraint State ($s_{\text{constraints}}$)**:
-$$s_{\text{constraints}} = [\text{privacy\_level}, \text{compliance\_requirements}, \text{user\_values}, \text{safety\_thresholds}]$$
-
-This captures alignment requirements:
-- `privacy_level`: public, internal, confidential, restricted
-- `compliance_requirements`: academic standards, legal requirements, industry regulations
-- `user_values`: accuracy weight, speed preference, cost sensitivity, ethical guidelines
-- `safety_thresholds`: maximum acceptable risk levels
-
-## Alignment-Complete State Spaces
-
-### Definition of Alignment Completeness
-
-A state space is **alignment-complete** if it contains sufficient information to make optimal aligned decisions in all possible situations:
-
-$$\forall s \in S, \exists \pi^*(s) : \mathbb{E}[\text{alignment\_violation}(\pi^*(s))] = 0$$
-
-This means that for every possible state, there exists an optimal policy that maintains perfect alignment.
-
-### Mathematical Properties for Alignment Completeness
-
-For a state space to support alignment, it must satisfy several critical properties:
-
-**1. Value Observability**
-The state must contain information about user values and constraints:
-$$\exists f: S \rightarrow V \text{ where } V \text{ represents user value states}$$
-
-Without observable values, the agent cannot know what to align with.
-
-**2. Context Sensitivity**  
-The state must distinguish between situations requiring different alignment approaches:
-$$s_i \neq s_j \Rightarrow \text{optimal\_aligned\_behavior}(s_i) \neq \text{optimal\_aligned\_behavior}(s_j)$$
-
-If the state representation doesn't distinguish between contexts where different values should take priority, the agent cannot learn contextually appropriate alignment.
-
-**3. History Awareness**
-The state must include relevant historical information for consistent alignment:
-$$s_t = g(s_{t-1}, a_{t-1}, r_{t-1}, \text{alignment\_feedback}_{t-1})$$
-
-Alignment often requires consistency over time—the agent needs to remember previous commitments and user preferences.
-
-**4. Constraint Visibility**
-The state must expose safety and ethical constraints:
-$$\forall c \in \text{Constraints}, \exists h: S \rightarrow \{0,1\} \text{ such that } h(s) = 1 \iff c \text{ is active in state } s$$
-
-Hidden constraints lead to alignment violations.
-
-**5. Consequence Awareness**
-The state should include information about potential consequences of actions:
-$$s_{\text{consequences}} = [\text{risk\_levels}, \text{stakeholder\_impacts}, \text{long\_term\_effects}]$$
-
-### Testing for Alignment Completeness
-
-We can test whether a state representation is alignment-complete by checking if optimal aligned behavior is learnable:
-
-**Identifiability Test**: Can the agent distinguish between states requiring different value priorities?
-$$\forall v_1, v_2 \in V, v_1 \neq v_2, \exists s_1, s_2 \in S : \text{priority}(v_1, s_1) > \text{priority}(v_2, s_1) \text{ and } \text{priority}(v_2, s_2) > \text{priority}(v_1, s_2)$$
-
-**Consistency Test**: Can the agent maintain consistent alignment across similar contexts?
-$$\text{similar}(s_1, s_2) \Rightarrow \text{aligned\_action}(s_1) \approx \text{aligned\_action}(s_2)$$
-
-**Completeness Test**: Does the state contain enough information to satisfy all alignment requirements?
-$$\forall r \in \text{Requirements}, \exists f_r: S \rightarrow \mathbb{R} \text{ such that } f_r(s) \text{ measures satisfaction of } r \text{ in state } s$$
-
-## The Hidden Alignment Problem
-
-### Mathematical Framework for Partial Observability
-
-In real environments, agents only observe partial state information:
-
-$$o_t = H(s_t) + \epsilon_t$$
-
-where:
-- $H$ is an observation function that maps true states to observations
-- $\epsilon_t$ is observation noise
-- $o_t$ is what the agent actually sees
-
-**Critical Insight**: Some alignment-relevant information may be systematically hidden from the agent.
-
-### Types of Hidden Alignment Information
-
-**1. Unspoken User Values**
-Users may not explicitly state their true preferences:
-$$V_{\text{stated}} \neq V_{\text{true}}$$
-
-Example: User says "get me information quickly" but actually prioritizes accuracy over speed in high-stakes situations.
-
-**2. Long-term Consequences**
-Immediate outcomes may not reflect long-term alignment:
-$$\text{immediate\_satisfaction}(a) \not\propto \text{long\_term\_alignment}(a)$$
-
-Example: Providing biased but confirming information may satisfy users immediately but violate long-term trust.
-
-**3. Stakeholder Impacts**
-Actions may affect people beyond the immediate user:
-$$\text{stakeholders}(a) \supset \{\text{direct\_user}\}$$
-
-Example: Research on sensitive topics may impact communities not directly involved in the query.
-
-**4. Systemic Effects**
-Individual agent actions may have broader societal implications:
-$$\text{societal\_impact}(\{a_1, a_2, ..., a_n\}) \neq \sum_i \text{individual\_impact}(a_i)$$
-
-### Mathematical Approaches to Hidden Information
-
-**1. Conservative Estimation**
-When alignment-critical information is uncertain, assume more restrictive constraints:
-$$\text{if } \text{uncertainty}(s_{\text{constraints}}) > \theta, \text{ then } s_{\text{constraints}} \leftarrow \text{tighten}(s_{\text{constraints}})$$
-
-**2. Active Information Gathering**
-Use tools specifically to uncover hidden alignment information:
-$$\text{if } \text{alignment\_uncertainty}(s) > \tau, \text{ then } a^* = \underset{a}{\arg\max} \text{ information\_gain\_alignment}(a, s)$$
-
-**3. Bayesian Belief Updates**
-Maintain probability distributions over hidden alignment-relevant variables:
-$$P(V_{\text{true}} | o_1, ..., o_t) = \frac{P(o_t | V_{\text{true}}) P(V_{\text{true}} | o_1, ..., o_{t-1})}{\sum_{v} P(o_t | v) P(v | o_1, ..., o_{t-1})}$$
-
-**4. Human-in-the-Loop Querying**
-Explicitly ask humans when alignment-critical information is missing:
-$$\text{if } H(s_{\text{alignment}}) < \text{threshold}, \text{ then } a^* = \text{human\_consultation}$$
-
-## The Markov Property and Alignment
-
-### Standard Markov Property
-
-The **Markov property** states that future states depend only on the current state, not the full history:
-
-$$P(s_{t+1} | s_0, a_0, s_1, a_1, ..., s_t, a_t) = P(s_{t+1} | s_t, a_t)$$
-
-### Alignment Implications of the Markov Property
-
-**Opportunity**: If the state space properly encodes alignment-relevant information, the Markov property simplifies learning optimal aligned behavior. The agent doesn't need to remember arbitrary history—just the alignment-relevant summary captured in the current state.
-
-**Challenge**: If alignment-critical information is lost due to insufficient state representation, the agent cannot maintain consistent aligned behavior. The Markov property becomes a liability when important context is discarded.
-
-### Designing Markov States for Alignment
-
-To maintain the benefits of the Markov property while preserving alignment, the state must be a **sufficient statistic** for alignment decisions:
-
-$$P(\text{optimal\_aligned\_action} | \text{full\_history}) = P(\text{optimal\_aligned\_action} | s_t)$$
-
-This requires careful design of what information to include in the state representation.
-
-**Alignment-Relevant History Compression**:
-Instead of storing full history, store alignment-relevant summaries:
-- **Value Consistency**: Has the agent been consistent with stated user values?
-- **Trust Building**: What is the trajectory of user trust over time?
-- **Commitment Tracking**: What implicit commitments has the agent made?
-- **Risk Accumulation**: How much alignment risk has built up over time?
-
-## Observable vs. Hidden State Components
-
-### Mathematical Partitioning of State Information
-
-We can partition the true state into observable and hidden components:
-
-$$s = [s_{\text{obs}}, s_{\text{hidden}}]$$
-
-where:
-- $s_{\text{obs}}$ = information directly available to the agent
-- $s_{\text{hidden}}$ = alignment-relevant information not directly observable
-
-### Observable Components for Multi-Tool Agent
-
-**Directly Observable**:
-- User's explicit query and stated requirements
-- Available tools and their documented capabilities
-- Resource constraints (time, budget, API limits)
-- Explicit compliance requirements
-- Previous tool outputs and measurable outcomes
-
-**Mathematical Representation**:
-$$s_{\text{obs}} = [q, T_{\text{available}}, R_{\text{constraints}}, C_{\text{explicit}}, H_{\text{outputs}}]$$
-
-### Hidden Components Critical for Alignment
-
-**User's True Values vs. Stated Preferences**:
-$$V_{\text{true}} \neq V_{\text{stated}}$$
-
-Users may not accurately communicate their true preferences, especially under time pressure or when values conflict.
-
-**Long-term Relationship Dynamics**:
-$$\text{trust}_{t+1} = f(\text{trust}_t, \text{alignment\_quality}(a_t), \text{user\_personality})$$
-
-Trust evolves based on agent behavior, but the agent may not directly observe trust levels.
-
-**Broader Stakeholder Impacts**:
-$$\text{affected\_parties} = \{u_{\text{primary}}, u_{\text{secondary}}, c_{\text{community}}, s_{\text{society}}\}$$
-
-Research decisions may impact people beyond the immediate user.
-
-**Systemic and Emergent Effects**:
-$$\text{emergence}(\{a_1, a_2, ..., a_n\}) \neq \bigcup_i \text{direct\_effects}(a_i)$$
-
-Large-scale patterns may emerge from individual agent behaviors.
-
-### Strategies for Hidden State Estimation
-
-**1. Implicit Value Learning**
-Learn user's true values from their reactions to different types of information:
-$$V_{\text{estimated}} = \underset{V}{\arg\max} P(V | \text{user\_feedback\_history})$$
-
-**2. Multi-Stakeholder Modeling**
-Explicitly model potential impacts on different stakeholder groups:
-$$\text{impact\_model} = \{f_i: A \times S \rightarrow \text{Impact}_i \mid i \in \text{Stakeholders}\}$$
-
-**3. Uncertainty Quantification**
-Maintain explicit uncertainty estimates about hidden alignment-relevant variables:
-$$\text{uncertainty}(s_{\text{hidden}}) = H[P(s_{\text{hidden}} | s_{\text{obs}}, \text{history})]$$
-
-where $H[\cdot]$ is the entropy function.
-
-## State Transition Dynamics and Alignment Preservation
-
-### How Tool Usage Affects State Components
-
-When the agent selects a tool, different components of the state update according to different dynamics:
-
-$$s_{t+1} = T(s_t, a_t, \omega_t)$$
-
-where $\omega_t$ represents stochastic outcomes from tool usage.
-
-**Information State Updates**:
-$$s_{\text{info}, t+1} = s_{\text{info}, t} \cup \text{tool\_output}(a_t, \omega_t)$$
-
-New information is added to the agent's knowledge base.
-
-**Resource State Updates**:  
-$$s_{\text{resources}, t+1} = s_{\text{resources}, t} - \text{cost}(a_t)$$
-
-Resources are consumed based on tool usage.
-
-**Context State Updates**:
-$$s_{\text{context}, t+1} = f(s_{\text{context}, t}, \text{time\_elapsed}(a_t), \text{pressure\_change}(\omega_t))$$
-
-Context may change due to external factors or the passage of time.
-
-**Constraint State Updates**:
-$$s_{\text{constraints}, t+1} = \begin{cases}
-s_{\text{constraints}, t} & \text{if no violations detected} \\
-\text{tighten\_constraints}(s_{\text{constraints}, t}) & \text{if violations detected}
-\end{cases}$$
-
-Constraints may tighten if the agent makes alignment mistakes.
-
-**History State Updates**:
-$$s_{\text{history}, t+1} = \text{compress}([s_{\text{history}, t}, a_t, r_t, \text{alignment\_outcome}_t])$$
-
-New experiences are integrated into the alignment-relevant history summary.
-
-### Preserving Alignment Information Through Transitions
-
-**Critical Property**: State transitions must preserve alignment-relevant information:
-
-$$\text{alignment\_information}(s_{t+1}) \geq \text{alignment\_information}(s_t)$$
-
-This means that taking actions should not destroy information needed for future alignment decisions.
-
-**Design Principle**: When information must be discarded due to state space limitations, prioritize preserving alignment-critical components over task-specific details.
-
-## Key Takeaways for State Space Design
-
-### 1. Alignment Completeness is Non-Negotiable
-
-Your state representation must contain enough information to make optimal aligned decisions. Missing alignment-critical information makes robust alignment impossible, regardless of how sophisticated your learning algorithm is.
-
-### 2. Hidden Information Requires Explicit Handling
-
-Don't assume the agent can observe everything needed for alignment. Design explicit mechanisms for:
-- Detecting when alignment-critical information is hidden
-- Actively gathering such information when needed
-- Making conservative assumptions when uncertainty is high
-
-### 3. The Markov Property is a Tool, Not a Constraint
-
-Use the Markov property to simplify learning, but ensure your state representation is a sufficient statistic for alignment decisions. Don't sacrifice alignment-relevant history for mathematical convenience.
-
-### 4. Observable ≠ Alignment-Relevant
-
-Just because something is observable doesn't mean it's important for alignment, and vice versa. Explicitly design your state representation to prioritize alignment-relevant information.
-
-### 5. State Transitions Affect Future Alignment
-
-How your state representation evolves over time directly impacts the agent's ability to maintain alignment. Design transition dynamics that preserve and accumulate alignment-relevant information.
+# Module 3A: State, Observation, and Sufficiency for Aligned Decisions
+
+## Learning Objectives
+
+By the end of this lesson you will be able to:
+
+- State the formal definitions of an MDP and a POMDP, and explain belief states.
+- Explain **state aliasing** and why it — not "distinct states need distinct
+  actions" — is the property that matters for alignment.
+- Articulate the feature-sufficiency principle: if a feature that determines the
+  value-correct action is unobservable, no policy can condition on it.
+- Connect these abstractions to how LLM agents actually represent state in 2026,
+  and to the dataclasses in the companion notebook.
+
+## Introduction: An Agent Acts on What It Can See
+
+In reinforcement learning, an agent's behavior is a function of its state
+representation. For alignment this has a blunt consequence: **an agent can be no
+more aligned than its state representation permits.** If the information that
+determines the value-correct action is not present in what the agent observes,
+then no learning algorithm, however sophisticated, can recover the right
+behavior — there is simply nothing to condition on. This lesson makes that
+intuition precise using the standard machinery of Markov decision processes and
+their partially observed cousins, and connects it to how modern LLM agents
+represent state.
+
+We build on standard definitions throughout (Sutton & Barto, 2018; Puterman,
+1994; Kaelbling, Littman & Cassandra, 1998). Where the previous version of this
+lesson reached for invented predicates and an incorrect "context sensitivity"
+property, we use the established concepts — which turn out to say the useful
+thing more correctly.
+
+## The MDP and Its State
+
+A **Markov decision process** is a tuple $(\mathcal{S}, \mathcal{A}, P, R,
+\gamma)$: a state set $\mathcal{S}$, an action set $\mathcal{A}$, a transition
+function $P(s' \mid s, a)$, a reward function $R(s, a)$, and a discount $\gamma
+\in [0, 1)$. The defining feature is the **Markov property**: the future depends
+on the present alone,
+
+$$
+P(s_{t+1} \mid s_0, a_0, \dots, s_t, a_t) = P(s_{t+1} \mid s_t, a_t).
+$$
+
+When this holds, the current state is a **sufficient statistic** for the future:
+remembering more history buys nothing. This is a property *of the state
+representation*, not of the world — and that is precisely the design lever. A
+representation is Markov when it captures everything decision-relevant; it fails
+to be Markov when it throws away something that matters.
+
+## Partial Observability: The POMDP
+
+Real agents rarely see the true state. A **partially observable MDP** (Kaelbling,
+Littman & Cassandra, 1998) extends the MDP with an observation set $\Omega$ and an
+observation function $O(o \mid s', a)$ giving the probability of seeing
+observation $o$ after action $a$ lands the system in $s'$. The agent never sees
+$s_t$; it sees $o_t$.
+
+A single observation is generally *not* a sufficient statistic — different true
+states can produce the same observation. The principled response is to maintain a
+**belief state** $b_t$, a probability distribution over true states given the
+history of observations and actions:
+
+$$
+b_t(s) = P(s_t = s \mid o_0, a_0, o_1, a_1, \dots, o_t).
+$$
+
+The belief is updated by Bayes' rule as new observations arrive:
+
+$$
+b_{t+1}(s') \propto O(o_{t+1} \mid s', a_t) \sum_{s} P(s' \mid s, a_t)\, b_t(s).
+$$
+
+The key theorem: **the belief state is a sufficient statistic for an optimal
+policy in a POMDP** — an agent that conditions on $b_t$ loses nothing relative to
+one that conditions on the full history. Equivalently, the full
+observation-action history is itself a sufficient statistic. This is exactly why
+LLM agents condition on their entire context, as we discuss below.
+
+## State Aliasing: The Property That Actually Matters
+
+The previous version of this lesson claimed that a good state representation must
+satisfy $s_i \neq s_j \Rightarrow$ different optimal actions. That is **false** as
+stated: two genuinely different states can perfectly well share the same optimal
+action (an agent that should "search the academic database" in many distinct
+situations is not thereby broken). Requiring distinct states to demand distinct
+actions is neither necessary nor desirable.
+
+The correct concern is its converse — **state aliasing** (a standard POMDP
+notion). Aliasing occurs when the representation collapses two situations that
+*require different actions* into the same observed state:
+
+$$
+o(s_i) = o(s_j) \quad \text{but} \quad a^*(s_i) \neq a^*(s_j).
+$$
+
+When this happens, the agent literally cannot tell the two apart, so it must
+choose one action for both — and is necessarily wrong in at least one. A state
+representation must **distinguish situations that require different actions**. It
+need not, and should not, distinguish situations that share an optimal action.
+The discipline, then, is not "make every state unique" but "make sure no two
+situations that demand different responses look identical to the agent." For
+alignment specifically, the situations most often dangerously aliased are ones
+that differ in *stakes* or *user values* while looking superficially similar in
+content.
+
+## Feature Sufficiency for Aligned Behavior
+
+This gives a clean, correct restatement of the old lesson's "alignment-complete
+state" idea — without inventing any theorems.
+
+> **Feature-sufficiency principle.** If a feature $f$ determines the
+> value-correct action (two situations differing only in $f$ have different
+> optimal actions), but $f$ is not recoverable from the agent's observations,
+> then no policy over those observations can be reliably value-aligned.
+
+The proof is immediate: a policy is a function of the observation; if the
+observation does not vary with $f$, neither can the policy; but the correct action
+does vary with $f$; therefore the policy is wrong whenever $f$ would have changed
+the answer. This is not a deep result — it is the aliasing argument applied to
+alignment-relevant features — but it is the *correct* and load-bearing one, and it
+tells you exactly what your state design must capture.
+
+Which features are alignment-determining for our research agent? At minimum:
+
+- **User values** — the relative weight on accuracy, speed, cost. If the agent
+  cannot observe (or infer) that this user prioritizes rigor, it cannot
+  consistently choose rigor.
+- **Stakes** — a casual question and a high-consequence one may share wording but
+  demand different care. Aliasing them is a classic alignment failure.
+- **Resource budget** — the value-correct action under a tight budget differs from
+  the one under a generous budget.
+- **Relevant history** — prior tool results and commitments, so the agent stays
+  consistent across a multi-step interaction.
+
+Each is a feature whose absence from the state guarantees a class of misalignment.
+The design question is not "is my state big enough?" but "for each pair of
+situations my users will present that demand different actions, can my agent tell
+them apart?"
+
+## The Central Alignment POMDP: Hidden User Intent
+
+The single most important partially observed variable for alignment is **the
+user's true values**. Users state preferences imperfectly: a request to "do this
+quickly" may coexist with an unstated insistence on accuracy when the stakes are
+high. Formally, the true value vector $v^*$ is a hidden state component; the
+agent observes only noisy, partial evidence of it (the phrasing, the context, the
+reactions to prior outputs).
+
+This is a POMDP in the strict sense, and it licenses two principled behaviors that
+are otherwise ad hoc:
+
+1. **Belief maintenance over values.** Rather than committing to a point estimate
+   of $v^*$, the agent can maintain a belief and act under uncertainty —
+   conservatively when the stakes of being wrong about values are high.
+2. **Active information gathering.** When the value-belief is too uncertain to
+   determine the right action, the value-of-information calculation favors *asking*
+   — a clarifying question is the observation that most reduces uncertainty about
+   $v^*$. "Should I prioritize speed or thoroughness here?" is not a UX nicety; it
+   is the optimal POMDP action when the belief over values is too diffuse to act
+   on.
+
+Module 3E develops how preference evidence is actually turned into a value
+estimate; here the point is structural: hidden user intent is *the* POMDP feature
+that makes alignment a partial-observability problem rather than a
+fully-observed-control problem.
+
+## State in Practice: How LLM Agents Represent It
+
+These abstractions map directly onto 2026 systems.
+
+- **The context window is the observation-action history.** An LLM agent has no
+  hidden recurrent state; everything it conditions on — system prompt, messages,
+  prior tool calls and results, retrieved documents — is the token sequence in
+  context. By the POMDP sufficiency theorem, conditioning on the full history is
+  optimal, which is exactly what the architecture does. Context management
+  (truncation, summarization) is therefore a *belief-state* decision: drop an
+  alignment-determining feature and you induce aliasing.
+- **Tool schemas define the action space**, and **the system prompt encodes
+  constraints** — both are parts of the observation that shape which actions are
+  legal and which are appropriate.
+- **Partial observability of user intent** is realized concretely: the model sees
+  words, not values, and must infer the latter — the central POMDP feature above.
+
+### Connection to the companion notebook
+
+`RL_Alignment_Part1_Mathematical_Foundations.ipynb` makes the state decomposition
+concrete. It represents the agent's state as four dataclasses, each capturing one
+slice of the feature-sufficiency requirement:
+
+- **`ProblemState`** — query type, complexity, domain: *what is being asked*.
+- **`ContextState`** — time pressure, urgency, user expertise: *the situational
+  features that change the value-correct action* (precisely the features whose
+  aliasing causes misalignment).
+- **`ResourceState`** — budget and limits remaining: *the constraint features*.
+- **`ConstraintState`** — including the user-value weights: *the alignment-
+  determining features* that must be observable for value-conditioned behavior.
+
+Reading those classes alongside this lesson, you can see the feature-sufficiency
+principle as an engineering checklist: every field exists because its absence
+would alias situations that demand different actions. The notebook then builds the
+action space and stochastic rewards on top of this state.
+
+## Key Takeaways
+
+- An MDP's **Markov property** makes the current state a sufficient statistic;
+  under partial observability (a **POMDP**), the **belief state** plays that role.
+- The property that matters for alignment is **avoiding state aliasing** — the
+  representation must distinguish situations that require different actions. The
+  old "distinct states ⇒ distinct actions" claim is false and unnecessary.
+- **Feature sufficiency**: if an alignment-determining feature (user values,
+  stakes, budget) is unobservable, no policy can condition on it — so it must be
+  in the state. This is the correct, provable version of "alignment-complete
+  state."
+- **Hidden user intent** is the central alignment POMDP feature, justifying belief
+  maintenance over values and clarifying questions as the optimal action under
+  value-uncertainty.
+- In 2026 agents, the **context window is the history**, and the notebook's
+  `ProblemState`/`ContextState`/`ResourceState`/`ConstraintState` are a concrete
+  feature-sufficiency checklist.
 
 ## Next Steps
 
-Understanding state spaces provides the foundation for all other RL alignment concepts. In the next lesson (Module 3B), we'll explore how action spaces must be designed to provide meaningful choices between different value trade-offs, building on the alignment-complete state representations covered here.
+Module 3B examines how the action space must be designed to expose meaningful
+value trade-offs, and 3C turns to the stochastic rewards that those actions
+produce. The thread that runs through all of them is the one established here: the
+agent acts on its representation, so alignment is won or lost in what that
+representation makes observable.
 
-The key insight from this lesson: **an agent can only be as aligned as its state representation allows**. Everything else—policies, rewards, learning algorithms—builds on this foundation.
+## References
+
+- Sutton, R. S., & Barto, A. G. (2018). *Reinforcement Learning: An Introduction* (2nd ed.). MIT Press.
+- Puterman, M. L. (1994). *Markov Decision Processes: Discrete Stochastic Dynamic Programming*. Wiley.
+- Kaelbling, L. P., Littman, M. L., & Cassandra, A. R. (1998). Planning and acting in partially observable stochastic domains. *Artificial Intelligence*, 101(1–2), 99–134.
