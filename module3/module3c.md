@@ -1,388 +1,153 @@
-# Module 3C: Stochastic Rewards and Uncertainty
+# Module 3C: Stochastic Rewards and Risk
 
-## Introduction: Embracing Uncertainty for Robust Alignment
+> **What you'll get out of this:** why "maximize the average reward" is sometimes
+> exactly the wrong objective, and the math (CVaR) for caring about the bad days
+> instead.
 
-Traditional approaches to AI alignment often assume deterministic relationships: if an agent takes the "right" action in a given situation, it should reliably produce the "right" outcome. However, real-world environments are fundamentally stochastic, the same action in the same situation can produce dramatically different results due to factors beyond the agent's control.
+## The reward isn't a number, it's a distribution
 
-**The Paradigm Shift**: Rather than treating uncertainty as a problem to be minimized, stochastic reward modeling treats uncertainty as an essential feature of realistic alignment. By learning to maintain alignment across uncertain outcomes, agents develop more robust and generalizable aligned behavior.
+Here's a habit worth breaking early. People write $R(s, a)$ as if the same action
+in the same state always pays the same. It doesn't. Real environments are
+stochastic: same action, same situation, different outcome, because of things the
+agent doesn't control. APIs vary, sources vary, users react differently.
 
-This lesson explores the mathematical foundations of stochastic reward systems and why they are crucial for developing AI agents that remain aligned even when facing unpredictable outcomes.
+So stop treating reward as a fixed value:
 
-## Mathematical Foundation of Stochastic Rewards
+$$R(s, a) \sim \mathcal{D}_{s,a}$$
 
-### From Deterministic to Stochastic Rewards
+It's a distribution. And once you accept that, a more interesting question opens up:
+do you care about the *average* outcome, or the *worst* outcomes? For alignment,
+the answer is often "the worst ones," and that changes everything.
 
-**Traditional Deterministic Approach**:
-$$R(s,a) = \text{fixed value}$$
+## What you'll be able to do
 
-**Stochastic Approach**:
-$$R(s,a) \sim \mathcal{D}_{s,a}$$
+- Model reward as a distribution, not a point.
+- Tell mean-variance from CVaR objectives, and pick the right one.
+- Explain epistemic versus aleatoric uncertainty and why it matters for exploration.
 
-where $\mathcal{D}_{s,a}$ is a probability distribution that depends on both state $s$ and action $a$.
+## Same tool, different distribution
 
-### Multi-Dimensional Stochastic Structure
+The same action has a totally different reward distribution depending on the
+problem. Academic search is a star for factual queries and mediocre under time
+pressure:
 
-For complex environments like our multi-tool research agent, the reward structure captures multiple sources of uncertainty:
+$$R_{\text{factual}}(s, a_{\text{academic}}) \sim \mathcal{N}(9.0, 1.0^2) \qquad R_{\text{urgent}}(s, a_{\text{academic}}) \sim \mathcal{N}(4.0, 2.0^2)$$
 
-$$R(s,a,c) = R_{\text{base}}(s,a) + R_{\text{context}}(c) + R_{\text{alignment}}(s,a,v) + \epsilon$$
+That's the reality a single average hides. No tool is best everywhere, and the
+*spread* matters as much as the mean.
 
-where:
-- $R_{\text{base}}(s,a) \sim \mathcal{N}(\mu_{s,a}, \sigma_{s,a}^2)$ = base tool effectiveness
-- $R_{\text{context}}(c) \sim \mathcal{U}(-\delta_c, \delta_c)$ = contextual modifiers (time pressure, resource constraints)
-- $R_{\text{alignment}}(s,a,v) \sim \mathcal{B}(\phi_{s,a})$ = alignment bonus/penalty based on value satisfaction
-- $\epsilon \sim \mathcal{N}(0, \sigma_{\text{noise}}^2)$ = random environmental noise
+## Why average isn't always the goal
 
-### Problem-Type Dependent Distributions
+Watch two tools:
 
-The same tool can have dramatically different effectiveness distributions depending on the problem type:
+$$\mathbb{E}[R(a_{\text{fast}})] = 8,\ \text{Var} = 9 \qquad \mathbb{E}[R(a_{\text{reliable}})] = 7.5,\ \text{Var} = 1$$
 
-**For Controversial Topics**:
-$$R_{\text{controversial}}(s, a_{\text{academic}}) \sim \mathcal{N}(8.0, 1.5^2)$$
-$$R_{\text{controversial}}(s, a_{\text{web}}) \sim \mathcal{N}(3.0, 2.5^2)$$
-$$R_{\text{controversial}}(s, a_{\text{bias\_detect}}) \sim \mathcal{N}(9.0, 1.2^2)$$
+The fast tool wins on average. But in a high-stakes situation, a risk-aware agent
+should often prefer the reliable one, lower mean, far lower chance of a disaster.
+That preference shows up in the utility:
 
-**For Time-Sensitive Queries**:
-$$R_{\text{urgent}}(s, a_{\text{academic}}) \sim \mathcal{N}(4.0, 2.0^2)$$
-$$R_{\text{urgent}}(s, a_{\text{web}}) \sim \mathcal{N}(7.5, 1.8^2)$$
-$$R_{\text{urgent}}(s, a_{\text{news}}) \sim \mathcal{N}(8.5, 2.2^2)$$
+$$\text{Utility}(a \mid s) = \mathbb{E}[R(s,a)] - \gamma \cdot \text{Var}[R(s,a)] + \lambda \cdot \text{Alignment}(s,a)$$
 
-**For Factual Queries**:
-$$R_{\text{factual}}(s, a_{\text{academic}}) \sim \mathcal{N}(9.0, 1.0^2)$$
-$$R_{\text{factual}}(s, a_{\text{web}}) \sim \mathcal{N}(6.0, 3.0^2)$$
-$$R_{\text{factual}}(s, a_{\text{fact\_check}}) \sim \mathcal{N}(8.5, 1.5^2)$$
+where $\gamma$ is risk aversion. Conservative users have high $\gamma$, aggressive
+users low. The point: **risk preference is itself a value you have to represent.**
 
-**Key Insight**: Notice how the same action (e.g., academic search) has completely different expected performance and variance depending on the problem type. This captures the reality that no single approach works optimally for all situations.
+## CVaR: caring about the bad tail
 
-## Why Stochastic Rewards Matter for Alignment
+Variance penalizes spread in both directions, but you usually only fear the
+downside. **Conditional Value at Risk** focuses there. For a confidence level
+$\alpha$, it's the expected reward in the worst $\alpha$ fraction of outcomes:
 
-### 1. Preventing Overfitting to Specific Outcomes
+$$\text{CVaR}_\alpha(s,a) = \mathbb{E}\big[R(s,a) \mid R(s,a) \leq \text{VaR}_\alpha(s,a)\big]$$
 
-**Deterministic Problem**:
-With deterministic rewards, agents can develop brittle strategies:
-$$\text{If } R(s, a_{\text{fast}}) = 10 \text{ always, then always choose fast tools}$$
+(Rockafellar & Uryasev, 2000). For safety-critical alignment, CVaR is usually the
+right lens, because alignment failures live in the tail, not the average. You can
+fold it straight into the Bellman equation:
 
-**Stochastic Solution**:
-With stochastic rewards, agents must consider distributions:
-$$\mathbb{E}[R(s, a_{\text{fast}})] = 8, \text{Var}[R(s, a_{\text{fast}})] = 9$$
-$$\mathbb{E}[R(s, a_{\text{reliable}})] = 7.5, \text{Var}[R(s, a_{\text{reliable}})] = 1$$
+$$Q^*(s,a) = \mathbb{E}[R(s,a)] - \alpha \cdot \text{Var}[R(s,a)] + \gamma\, \mathbb{E}[V^*(s')]$$
 
-A risk-aware agent might prefer the reliable tool despite lower expected reward, especially in high-stakes situations.
+or constrain it directly: maximize expected reward *subject to* $\text{CVaR}_\alpha[\text{violation}] \le \epsilon$.
 
-### 2. Learning Robust Value Trade-offs
+> **When to use which.** Expected value for symmetric, low-stakes, recoverable
+> situations, where averaging over many interactions is what matters. CVaR (or a
+> CVaR constraint) when a single bad outcome is expensive or irreversible. The
+> choice encodes how much the user cares about the worst case. Make it on purpose.
 
-**Expected Value vs. Risk Management**:
-Agents must learn to balance expected performance with risk tolerance:
+## Two kinds of uncertainty (they call for opposite responses)
 
-$$\text{Utility}(a|s) = \mathbb{E}[R(s,a)] - \gamma \cdot \text{Var}[R(s,a)] + \lambda \cdot \text{Alignment}(s,a)$$
+- **Epistemic:** uncertainty about the *mean* reward. You don't know it yet, but you
+  can *reduce* it by gathering data. This is what exploration is for.
+- **Aleatoric:** the *irreducible* randomness in the outcome. No amount of data
+  removes it; you can only model it and plan around it.
 
-where:
-- $\gamma$ = risk aversion parameter
-- $\lambda$ = alignment weight parameter
+Conflating them is a classic mistake: you can't explore your way out of aleatoric
+noise, and you shouldn't stop exploring just because outcomes are noisy. **Thompson
+sampling** handles the epistemic part cleanly: sample a plausible Q-value from your
+posterior and act greedily on it, so you explore exactly in proportion to your
+uncertainty.
 
-**User-Dependent Risk Preferences**:
-Different users have different risk tolerances, leading to different optimal action selections:
+$$\pi(a \mid s) = P\big(a = \arg\max_{a'} \tilde{Q}(s, a')\big),\quad \tilde{Q} \sim \text{posterior}$$
 
-$$\text{Conservative User: } \gamma_{\text{conservative}} = 0.8$$
-$$\text{Aggressive User: } \gamma_{\text{aggressive}} = 0.2$$
+## Learning the distribution online
 
-### 3. Alignment Under Uncertainty
+You're estimating means and spreads from a stream of noisy rewards. The workhorse
+is an exponential moving average, cheap and adaptive:
 
-Real-world alignment means maintaining values even when outcomes are unpredictable. Stochastic rewards force agents to learn policies that are robust across the full distribution of possible outcomes.
+$$\hat{\mu}_t = (1-\eta)\hat{\mu}_{t-1} + \eta r_t \qquad \hat{\sigma}_t^2 = (1-\eta)\hat{\sigma}_{t-1}^2 + \eta (r_t - \hat{\mu}_t)^2$$
 
-**Alignment Robustness Condition**:
-$$P(\text{alignment\_violation} | a, s) < \epsilon, \forall \text{realizations of } R(s,a)$$
+How much data do you need? For sub-Gaussian rewards with variance $\sigma^2$,
+reaching an $\epsilon$-accurate estimate takes on the order of
 
-This requires that aligned behavior emerges not just on average, but across the entire range of possible stochastic outcomes.
+$$N \sim \mathcal{O}\!\left(\frac{\sigma^2 \log(1/\delta)}{\epsilon^2}\right)$$
 
-### 4. Preventing Gaming and Reward Hacking
+samples. The lesson in that formula: noisier rewards cost you quadratically more
+data. Variance isn't just a risk concern, it's a sample-efficiency tax.
 
-**Deterministic Vulnerability**:
-With deterministic rewards, agents can find loopholes:
-$$\text{If } R(\text{query satisfied}) = +10 \text{ always, exploit technicalities to "satisfy" queries}$$
+## A claim to be careful with
 
-**Stochastic Protection**:
-With stochastic rewards based on genuine user satisfaction:
-$$R(\text{query satisfaction}) \sim \mathcal{N}(\text{true\_satisfaction}, \sigma^2)$$
+You'll read that "stochastic rewards prevent reward hacking." Be skeptical. Noise
+makes *some* brittle exploits harder, an agent can't lock onto a single
+deterministic loophole. But it does **not** prevent specification gaming: if your
+reward is misspecified, the agent will still find the misspecification, noise or no
+noise. Stochasticity buys robustness against fragile shortcuts, not immunity from a
+wrong objective. Don't oversell it.
 
-Gaming becomes much harder because agents must succeed across many random variations of user reaction.
+## Where this shows up in modern training
 
-### 5. Modeling Real-World Complexity
+Two direct connections you'll meet in Module 4:
 
-Stochastic rewards reflect genuine uncertainty in tool effectiveness:
+- **GRPO's group baseline is Monte Carlo estimation of a reward distribution.**
+  Sample several responses per prompt, use the group mean as the baseline. That's
+  exactly estimating $\mathbb{E}[R]$ from samples (Shao et al., 2024).
+- **RLVR (verifiable rewards)** is the low-variance dream of this lesson: when a
+  program can *check* the answer, the reward distribution collapses toward
+  deterministic, and reward hacking has far less room to operate, because you can't
+  fool a verifier the way you can fool a learned model.
 
-**API Variability**: Services have variable response times and quality
-$$R_{\text{api\_call}} \sim \mathcal{N}(\mu_{\text{service}}, \sigma_{\text{load}}^2)$$
+## The takeaways
 
-**Source Quality**: Information quality varies unpredictably
-$$R_{\text{source\_quality}} \sim \text{Beta}(\alpha_{\text{reputation}}, \beta_{\text{reputation}})$$
+- Reward is a **distribution**, not a number. The spread matters as much as the
+  mean.
+- **Average isn't always the objective.** Use expected value for low-stakes,
+  recoverable settings; **CVaR** when the tail is expensive or irreversible.
+- Separate **epistemic** (reducible, explore it) from **aleatoric** (irreducible,
+  model it) uncertainty. Thompson sampling explores by uncertainty.
+- **Noise is a sample-efficiency tax** ($N \sim \sigma^2/\epsilon^2$), and it does
+  **not** immunize you against a misspecified reward.
 
-**User Satisfaction**: User reactions depend on factors beyond agent control
-$$R_{\text{user\_satisfaction}} \sim \mathcal{N}(\text{objective\_quality}, \sigma_{\text{subjective}}^2)$$
+## Think about it
 
-## Mathematical Analysis of Stochastic Learning
+1. In your domain, name a decision where you'd optimize CVaR instead of the mean.
+   What's the tail you're afraid of?
+2. You see an agent's reward variance spike on a tool. Is that epistemic (keep
+   exploring) or aleatoric (model and move on)? How would you tell?
 
-### Expected Value Estimation
+## Next
 
-Under stochastic rewards, the agent must learn to estimate:
+Module 3D zooms out from single rewards to whole **trajectories**: how to keep an
+agent aligned across a multi-step sequence, not just one decision at a time.
 
-$$Q^*(s,a) = \mathbb{E}[R(s,a) + \gamma \max_{a'} Q^*(s',a') | s,a]$$
+## References
 
-This becomes:
-
-$$Q^*(s,a) = \mathbb{E}_{\mathcal{D}_{s,a}}[r] + \gamma \mathbb{E}_{s' \sim P(s'|s,a)}[\max_{a'} Q^*(s',a')]$$
-
-The agent must estimate both the mean and higher moments of the reward distribution.
-
-### Variance-Aware Value Functions
-
-For alignment, we often need to consider not just expected rewards but their variability:
-
-**Mean-Variance Value Function**:
-$$V_{\text{robust}}(s) = \mathbb{E}[R] - \alpha \cdot \text{Var}[R]$$
-
-**Conditional Value at Risk (CVaR)**:
-$$\text{CVaR}_\beta(s,a) = \mathbb{E}[R(s,a) | R(s,a) \leq \text{VaR}_\beta(s,a)]$$
-
-This focuses on worst-case performance, crucial for safety-critical alignment.
-
-**Risk-Sensitive Bellman Equation**:
-$$Q^*(s,a) = \mathbb{E}[R(s,a)] - \alpha \cdot \text{Var}[R(s,a)] + \gamma \mathbb{E}[V^*(s')]$$
-
-### Exploration Under Uncertainty
-
-Stochastic rewards create richer exploration dynamics:
-
-**Epistemic vs. Aleatoric Uncertainty**:
-- **Epistemic**: Uncertainty about the mean $\mathbb{E}[R(s,a)]$ (reducible through experience)
-- **Aleatoric**: Inherent randomness in $R(s,a)$ (irreducible)
-
-**Thompson Sampling for Stochastic Rewards**:
-$$\pi(a|s) = P(a = \underset{a'}{\arg\max} \tilde{Q}(s,a'))$$
-
-where $\tilde{Q}(s,a)$ is sampled from the posterior distribution over Q-values.
-
-## Stochastic Reward Design for Multi-Tool Agents
-
-### Context-Dependent Variance
-
-Different contexts should have different levels of uncertainty:
-
-**Low-Stakes Contexts** (routine fact-checking):
-$$R(s,a) \sim \mathcal{N}(\mu, 0.5^2)$$ (low variance)
-
-**High-Stakes Contexts** (medical information):
-$$R(s,a) \sim \mathcal{N}(\mu, 2.0^2)$$ (high variance)
-
-**Novel Contexts** (emerging technologies):
-$$R(s,a) \sim \mathcal{N}(\mu, 3.0^2)$$ (very high variance)
-
-### Tool Interaction Effects
-
-Reward distributions can depend on the sequence of tools used:
-
-**Independent Tools**:
-$$R([a_1, a_2]) = R(a_1) + R(a_2) + \epsilon$$
-
-**Synergistic Tools**:
-$$R([a_{\text{academic}}, a_{\text{fact\_check}}]) \sim \mathcal{N}(\mu_1 + \mu_2 + \text{synergy}, \sigma^2)$$
-
-**Conflicting Tools**:
-$$R([a_{\text{web}}, a_{\text{academic}}]) \sim \mathcal{N}(\mu_1 + \mu_2 - \text{conflict}, \sigma_{\text{increased}}^2)$$
-
-### Temporal Dynamics
-
-Reward distributions can change over time:
-
-**Tool Degradation**:
-$$\mu_t = \mu_0 \cdot \exp(-\lambda t)$$ (performance decreases with overuse)
-
-**Learning Effects**:
-$$\sigma_t^2 = \sigma_0^2 \cdot (1 + \alpha \cdot \text{experience}_t)^{-1}$$ (variance decreases with experience)
-
-**Environmental Shifts**:
-$$\mathcal{D}_{s,a,t} = (1-\beta) \mathcal{D}_{s,a,t-1} + \beta \mathcal{D}_{\text{new}}$$ (gradual distribution shift)
-
-## Alignment Robustness Through Stochastic Training
-
-### Worst-Case Alignment Analysis
-
-For safety-critical applications, we need alignment guarantees across the entire reward distribution:
-
-**Worst-Case Constraint**:
-$$\inf_{r \sim \mathcal{D}_{s,a}} \text{alignment\_score}(s,a,r) \geq \tau_{\text{min}}$$
-
-**Probabilistic Constraint**:
-$$P(\text{alignment\_score}(s,a,r) \geq \tau | r \sim \mathcal{D}_{s,a}) \geq 1-\delta$$
-
-### Risk-Aware Policy Optimization
-
-**Traditional Objective**:
-$$J(\pi) = \mathbb{E}_{\tau \sim \pi}[\sum_t \gamma^t r_t]$$
-
-**Risk-Aware Objective**:
-$$J_{\text{robust}}(\pi) = \mathbb{E}_{\tau \sim \pi}[\sum_t \gamma^t r_t] - \alpha \cdot \text{CVaR}_\beta[\sum_t \gamma^t r_t]$$
-
-This balances expected performance with worst-case protection.
-
-### Alignment-Constrained Exploration
-
-**Standard ε-greedy**:
-$$\pi(a|s) = \begin{cases}
-\text{random action} & \text{with probability } \epsilon \\
-\underset{a}{\arg\max} Q(s,a) & \text{otherwise}
-\end{cases}$$
-
-**Alignment-Constrained Exploration**:
-$$\pi(a|s) = \begin{cases}
-\text{random aligned action} & \text{with probability } \epsilon \\
-\underset{a \in A_{\text{aligned}}}{\arg\max} Q(s,a) & \text{otherwise}
-\end{cases}$$
-
-where $A_{\text{aligned}} = \{a : P(\text{alignment\_violation}|a,s) < \delta\}$
-
-## Measuring Stochastic Learning Progress
-
-### Distributional Learning Metrics
-
-**Moment Matching**:
-How well does the agent's learned distribution match the true reward distribution?
-$$\text{KL}(\mathcal{D}_{\text{true}}(s,a) \| \mathcal{D}_{\text{learned}}(s,a))$$
-
-**Risk Assessment Accuracy**:
-How well does the agent predict worst-case outcomes?
-$$\text{Error}_{\text{CVaR}} = |\text{CVaR}_{\text{true}} - \text{CVaR}_{\text{estimated}}|$$
-
-**Alignment Robustness**:
-How consistent is alignment across stochastic realizations?
-$$\text{Robustness} = 1 - \text{Var}_{r \sim \mathcal{D}}[\text{alignment\_score}(s,a,r)]$$
-
-### Convergence Under Stochasticity
-
-**Sample Complexity**: How many samples are needed to learn good policies under stochastic rewards?
-
-For sub-Gaussian rewards with variance $\sigma^2$:
-$$N_{\text{samples}} = O\left(\frac{\sigma^2 \log(1/\delta)}{\epsilon^2}\right)$$
-
-**Alignment Convergence**: How quickly does alignment improve?
-$$\mathbb{E}[\text{alignment\_violation}_t] \leq \mathbb{E}[\text{alignment\_violation}_0] \cdot \exp(-\lambda t)$$
-
-## Practical Implementation Considerations
-
-### Reward Distribution Estimation
-
-**Maximum Likelihood Estimation**:
-$$\hat{\mu}, \hat{\sigma}^2 = \underset{\mu, \sigma^2}{\arg\max} \prod_i P(r_i | \mu, \sigma^2)$$
-
-**Bayesian Estimation**:
-$$P(\mu, \sigma^2 | \{r_i\}) \propto P(\{r_i\} | \mu, \sigma^2) P(\mu, \sigma^2)$$
-
-**Non-parametric Estimation**:
-Use kernel density estimation or empirical distributions when the parametric form is unknown.
-
-### Online Distribution Updates
-
-As new data arrives, update reward distribution estimates:
-
-**Exponential Moving Average**:
-$$\hat{\mu}_t = (1-\alpha) \hat{\mu}_{t-1} + \alpha r_t$$
-$$\hat{\sigma}_t^2 = (1-\alpha) \hat{\sigma}_{t-1}^2 + \alpha (r_t - \hat{\mu}_t)^2$$
-
-**Sliding Window**:
-Use only the most recent $N$ observations to handle non-stationarity.
-
-### Computational Considerations
-
-**Monte Carlo Estimation**:
-For complex distributions, use sampling to estimate expectations:
-$$\mathbb{E}[f(R)] \approx \frac{1}{N} \sum_{i=1}^N f(r_i)$$
-
-**Variance Reduction**:
-Use control variates, importance sampling, or stratified sampling to reduce estimation variance.
-
-## Common Pitfalls in Stochastic Reward Design
-
-### 1. Underestimating Variance
-
-**Problem**: Assuming low variance when true variance is high
-$$\sigma_{\text{assumed}}^2 \ll \sigma_{\text{true}}^2$$
-
-**Result**: Agent overconfident in predictions, makes poor risk assessments
-
-**Solution**: Conservative variance estimation, especially early in training
-
-### 2. Ignoring Distribution Shape
-
-**Problem**: Assuming normal distributions when true distributions are skewed or multi-modal
-
-**Result**: Poor tail risk estimation, inadequate worst-case planning
-
-**Solution**: Use flexible distribution families or non-parametric methods
-
-### 3. Static Distribution Assumptions
-
-**Problem**: Assuming reward distributions don't change over time
-
-**Result**: Agent fails to adapt to changing environments
-
-**Solution**: Implement distribution shift detection and adaptation mechanisms
-
-### 4. Correlation Neglect
-
-**Problem**: Treating correlated rewards as independent
-$$\text{Cov}[R(s,a_1), R(s,a_2)] \neq 0 \text{ but assumed } = 0$$
-
-**Result**: Poor portfolio-like decision making when combining tools
-
-**Solution**: Model correlation structure explicitly
-
-## Integration with Alignment Objectives
-
-### Stochastic Alignment Constraints
-
-Rather than deterministic constraints, use probabilistic alignment guarantees:
-
-$$P(\text{value\_violation}(a,s) | r \sim \mathcal{D}_{s,a}) \leq \epsilon$$
-
-### Multi-Objective Stochastic Optimization
-
-Balance multiple stochastic objectives:
-
-$$\max_\pi \mathbb{E}[R_{\text{performance}}] \text{ subject to } P(R_{\text{alignment}} < \tau) \leq \delta$$
-
-### Uncertainty-Aware Value Learning
-
-Learn user values while accounting for uncertainty in their expression:
-
-$$V_{\text{user}} \sim \mathcal{N}(\hat{v}, \Sigma_v)$$
-
-Update beliefs based on stochastic feedback:
-
-$$P(V_{\text{user}} | \text{feedback}) \propto P(\text{feedback} | V_{\text{user}}) P(V_{\text{user}})$$
-
-## Key Takeaways
-
-### 1. Embrace Uncertainty, Don't Fight It
-
-Stochastic rewards reflect genuine uncertainty in real-world environments. Trying to eliminate uncertainty often leads to brittle, overconfident systems.
-
-### 2. Risk Awareness Enables Robust Alignment
-
-By considering not just expected outcomes but their variability, agents can maintain alignment even when facing unpredictable situations.
-
-### 3. Stochasticity Prevents Gaming
-
-Random variation in rewards makes it much harder for agents to exploit loopholes or find unintended shortcuts to high rewards.
-
-### 4. Distribution Learning is Crucial
-
-Agents must learn not just means but full reward distributions to make good decisions under uncertainty.
-
-### 5. Context Affects Uncertainty
-
-Different situations should have different levels of uncertainty. High-stakes or novel contexts warrant higher variance and more conservative approaches.
-
-## Next Steps
-
-Understanding stochastic rewards provides the foundation for learning robust policies under uncertainty. In the next lesson (Module 3D), we'll explore how agents can maintain alignment throughout entire trajectories of actions, building on the uncertainty-aware reward modeling covered here.
-
-**Key Insight**: Stochastic rewards force agents to develop alignment strategies that work across distributions of outcomes, not just average cases. This creates more robust, generalizable aligned behavior.
+- Rockafellar, R. T., & Uryasev, S. (2000). Optimization of conditional value-at-risk. *Journal of Risk*, 2, 21-42.
+- Shao, Z., et al. (2024). DeepSeekMath (GRPO). arXiv:2402.03300.
+- Sutton, R. S., & Barto, A. G. (2018). *Reinforcement Learning: An Introduction* (2nd ed.). MIT Press.

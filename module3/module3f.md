@@ -1,712 +1,128 @@
-# Module 3F: Curriculum Learning and Progressive Complexity
-
-## Introduction: Systematic Path to Aligned Behavior
-
-Curriculum learning addresses a fundamental challenge in AI alignment: complex aligned behavior cannot be learned directly from scratch. Just as humans learn mathematics by starting with arithmetic before advancing to calculus, AI agents must master simpler alignment challenges before tackling complex real-world scenarios.
-
-**The Core Insight**: Aligned behavior emerges systematically from progressively more complex learning experiences, where each stage builds alignment capabilities while maintaining guarantees from previous stages.
-
-This lesson presents the mathematical foundations of curriculum design for alignment, showing how to structure learning experiences that naturally develop robust, generalizable aligned behavior.
-
-## Theoretical Foundation of Curriculum Learning
-
-### Mathematical Definition of a Curriculum
-
-A curriculum $C$ is a sequence of learning phases designed to build capabilities progressively:
-
-$$C = \{(D_1, \tau_1, \Pi_1), (D_2, \tau_2, \Pi_2), ..., (D_k, \tau_k, \Pi_k)\}$$
-
-where:
-- $D_i$ = distribution over problem instances at phase $i$
-- $\tau_i$ = termination criterion for phase $i$  
-- $\Pi_i$ = policy class allowed in phase $i$
-
-### Environment Progression Structure
-
-The curriculum creates a sequence of increasingly complex environments:
-
-$$\mathcal{E}_1 \subset \mathcal{E}_2 \subset ... \subset \mathcal{E}_k = \mathcal{E}_{\text{target}}$$
-
-where each $\mathcal{E}_i$ represents a progressively more complex subset of the target environment.
-
-**Key Property**: Each environment preserves alignment requirements:
-$$\forall i, \text{alignment\_requirements}(\mathcal{E}_i) \supseteq \text{alignment\_requirements}(\mathcal{E}_{\text{target}})$$
-
-Early stages may have additional alignment constraints to ensure safe learning.
-
-### What Curriculum Learning Can and Cannot Promise
-
-An honest note before the formalism: curriculum learning is a *heuristic* with
-strong empirical support in specific settings (Bengio et al., 2009,
-"Curriculum Learning"; Narvekar et al., 2020, JMLR survey "Curriculum Learning
-for Reinforcement Learning Domains"), not a technique with general convergence
-guarantees. Whether a curriculum helps depends on the task structure, the
-stage decomposition, and the transfer mechanism, and badly designed curricula
-can *hurt* by overfitting early stages. The framework in this lesson gives you
-a disciplined way to design and evaluate curricula; it does not make alignment
-mathematically guaranteed, and you should treat any such claim, here or in
-any paper, with skepticism. What the staged structure *does* buy you,
-demonstrably, is: (1) interpretable checkpoints where you can measure specific
-capabilities before adding complexity, and (2) the ability to keep safety
-constraints enforced while capability grows.
-
-## Stage-Specific Mathematical Structures
-
-### Stage 1: Basic Value Recognition (Episodes 1-2000)
-
-**Objective**: Learn fundamental associations between actions and values
-
-#### State Space Restriction
-$$S_1 = \{s \in S : \text{complexity}(s) < \theta_1, |\text{optimal\_tools}(s)| = 1\}$$
-
-Only simple problems with clear optimal solutions are included.
-
-#### Action Space Simplification
-$$A_1 = \{a \in A : \text{interpretable}(a) = \text{true}, \text{side\_effects}(a) = \text{minimal}\}$$
-
-Focus on tools with clear, predictable effects.
-
-#### Reward Function Properties
-$$\text{Var}[R_1(s,a)] < \sigma_1^2 \text{ and } \text{SNR}_1 = \frac{|\mathbb{E}[R_1(s,a^*)] - \mathbb{E}[R_1(s,a')]|}{\sigma_1} > \tau_1$$
-
-Low variance and high signal-to-noise ratio for clear learning signals.
-
-#### Learning Objective
-$$J_1(\pi) = \mathbb{E}_{s \sim D_1}[\max_a V_{\text{value}}(s,a)] + \lambda \mathbb{E}_{s \sim D_1}[\text{consistency}(\pi(s))]$$
-
-Focus on learning basic value-action associations with consistent behavior.
-
-#### Example Problems
-```
-Problem Type: Factual Query
-State: query="What is the capital of France?", stakes=low, time_pressure=0.2
-Optimal Action: academic_search (high accuracy, appropriate for simple facts)
-Value Lesson: Accuracy is prioritized for factual queries
-```
-
-#### Success Metrics
-- **Value Recognition**: 95% accuracy in identifying which values each tool serves
-- **Basic Consistency**: Same action chosen for equivalent problems 90% of the time
-- **Constraint Compliance**: 100% compliance with basic safety and ethical constraints
-
-### Stage 2: Multi-Objective Trade-offs (Episodes 2001-5000)
-
-**Objective**: Learn to balance competing values based on context
-
-#### State Space Expansion
-$$S_2 = \{s \in S : \text{complexity}(s) < \theta_2, 1 \leq |\text{competing\_values}(s)| \leq 2\}$$
-
-Problems involving trade-offs between two values (e.g., speed vs. accuracy).
-
-#### Dynamic Value Weights
-$$\mathbf{w}(s) = \mathbf{w}_{\text{base}} + \mathbf{f}_{\text{context}}(s)$$
-
-Value weights change based on context, requiring adaptive behavior.
-
-#### Multi-Objective Learning
-$$J_2(\pi) = \mathbb{E}_{s \sim D_2}\left[\sum_v w_v(s) \cdot V_v^\pi(s)\right] + \lambda \mathbb{E}[\text{trade\_off\_quality}(\pi)]$$
-
-**Trade-off Quality Metric**:
-$$\text{trade\_off\_quality}(\pi) = \frac{|\text{pareto\_optimal\_decisions}(\pi)|}{|\text{total\_decisions}(\pi)|}$$
-
-#### Example Problems
-```
-Problem Type: Time-Sensitive Research  
-State: query="Latest COVID-19 vaccine data", stakes=high, time_pressure=0.8
-Trade-off: Speed (urgent need) vs. Accuracy (high stakes)
-Learning: Context determines value priorities
-Optimal Strategy: Fast initial search followed by verification
-```
-
-#### Mathematical Challenge
-Learn policy that adapts to value weights:
-$$\pi_2(a|s) = \text{softmax}(\mathbf{w}(s)^T \mathbf{v}(a) + \mathbf{q}(s,a))$$
-
-where $\mathbf{v}(a)$ represents action's value profile and $\mathbf{q}(s,a)$ represents learned performance.
-
-#### Success Metrics
-- **Trade-off Recognition**: 85% accuracy in identifying optimal value trade-offs
-- **Context Adaptation**: Policy adapts appropriately to changing value weights
-- **Pareto Efficiency**: 80% of decisions lie on the Pareto frontier of achievable value combinations
-
-### Stage 3: Sequential Decision-Making (Episodes 5001-8000)
-
-**Objective**: Learn temporal dependencies and multi-step alignment
-
-#### Trajectory Complexity
-$$\tau_3 \in \{(s_0, a_0, ..., s_T, a_T) : 2 \leq T \leq 5, \text{dependencies}(\tau) > 0\}$$
-
-Multi-step problems where early actions affect later possibilities.
-
-#### Temporal Value Functions
-$$V_3^\pi(s,t) = \mathbb{E}_{\pi}\left[\sum_{k=t}^T \gamma^{k-t} (r_k + \lambda A_k(\tau_{0:k})) \mid s_t = s\right]$$
-
-Value functions now consider alignment throughout trajectories, not just individual actions.
-
-#### Sequential Alignment Constraints
-$$\forall \tau \sim \pi, \forall t, t' : \text{consistent\_values}(a_t, a_{t'}) \text{ if } \text{similar\_context}(s_t, s_{t'})$$
-
-Maintain value consistency across similar situations within trajectories.
-
-#### Information Value Learning
-$$\text{info\_value}(a_t) = \mathbb{E}[\Delta Q(s_{t+k}, a_{t+k}^*) \mid \text{info from } a_t], k > t$$
-
-Learn that some tools are valuable for enabling better future decisions.
-
-#### Example Problems
-```
-Problem Type: Controversial Topic Analysis
-State: query="Climate change economic impacts", stakes=high, conflicting_sources=true
-Trajectory: web_search → bias_detection → academic_search → fact_check → synthesis
-Learning: Early information gathering enables better later analysis
-Temporal Constraint: Maintain objectivity throughout sequence
-```
-
-#### Mathematical Framework
-**Sequential Policy**:
-$$\pi_3(a_t|s_t, \tau_{0:t-1}) = \text{softmax}(\mathbf{q}(s_t, a_t) + \mathbf{h}(\tau_{0:t-1})^T \mathbf{v}(a_t))$$
-
-where $\mathbf{h}(\tau_{0:t-1})$ encodes trajectory-relevant alignment information.
-
-**Consistency Loss**:
-$$L_{\text{consistency}} = \sum_{t,t'} \|a_t - a_{t'}\|^2 \cdot \text{similarity}(s_t, s_{t'}) \cdot \mathbb{I}[\text{same\_trajectory}(t,t')]$$
-
-#### Success Metrics
-- **Sequential Coherence**: 85% of multi-step plans maintain value consistency
-- **Information Planning**: Correctly identify information-gathering vs. decision-making actions
-- **Temporal Alignment**: Alignment scores remain stable throughout trajectories
-
-### Stage 4: Dynamic Context Adaptation (Episodes 8001-12000)
-
-**Objective**: Handle changing contexts and evolving constraints
-
-#### Dynamic Environment Properties
-$$s_{t+1} = f(s_t, a_t, \omega_t, \xi_t)$$
-
-where $\xi_t$ represents external context changes independent of agent actions.
-
-#### Adaptive Value Functions
-$$\mathbf{w}_t = g(\mathbf{w}_{t-1}, \Delta\text{context}_t, \text{user\_feedback}_t)$$
-
-Value weights evolve based on changing circumstances and user feedback.
-
-#### Context Shift Detection
-$$P(\text{context\_shift}_t) = \sigma(\mathbf{W} \cdot [\mathbf{s}_t, \mathbf{s}_{t-1}, \mathbf{a}_{t-1}])$$
-
-Learn to detect when context has changed enough to warrant value re-evaluation.
-
-#### Robust Policy Learning
-$$\pi_4(a|s,t) = \text{softmax}(\mathbf{q}(s,a) + \mathbf{w}_t^T \mathbf{v}(a) + \text{uncertainty\_bonus}(s,a))$$
-
-**Uncertainty Bonus**:
-$$\text{uncertainty\_bonus}(s,a) = \beta \sqrt{\text{Var}[\mathbf{w}(s)] \cdot \mathbf{v}(a)^2}$$
-
-Encourages robust actions when value weights are uncertain.
-
-#### Example Problems
-```
-Problem Type: Evolving Crisis Research
-Initial State: query="Economic impact analysis", stakes=medium, time_pressure=0.3
-Context Change: Breaking news changes stakes to high, time_pressure to 0.9
-Adaptation Required: Switch from comprehensive to rapid response mode
-Learning: Detect context shifts and adapt appropriately while maintaining core values
-```
-
-#### Mathematical Challenge
-**Meta-Learning Objective**:
-$$\max_\theta \mathbb{E}_{\text{contexts}} \mathbb{E}_{\text{tasks}} [\text{performance}(\pi_{\phi(\theta, \text{context})})]$$
-
-where $\phi(\theta, \text{context})$ adapts base policy $\theta$ to specific contexts.
-
-#### Success Metrics
-- **Adaptation Speed**: Detect context changes within 2 time steps
-- **Value Preservation**: Core values maintained despite context changes
-- **Performance Recovery**: Return to optimal performance within 5 steps of context shift
-
-### Stage 5: Adversarial Robustness (Episodes 12001-15000)
-
-**Objective**: Maintain alignment under pressure and adversarial conditions
-
-#### Adversarial Environment
-$$s_{\text{adv}} = s + \delta, \|\delta\| < \epsilon$$
-$$R_{\text{adv}}(s,a) = R(s,a) + \text{adversarial\_noise}(s,a)$$
-
-Environment includes perturbations designed to test alignment robustness.
-
-#### Worst-Case Optimization
-$$J_5(\pi) = \min_{\delta \in \Delta} \mathbb{E}[R(s + \delta, \pi(s + \delta)) + \lambda A(s + \delta, \pi(s + \delta))]$$
-
-Optimize for worst-case performance while maintaining alignment.
-
-#### Adversarial Training Scenarios
-- **Misleading Information**: Sources with high credibility scores but biased content
-- **Resource Pressure**: Sudden budget cuts mid-trajectory
-- **Conflicting Constraints**: Situations where user requests conflict with ethical guidelines
-- **Time Pressure**: Extreme urgency that might pressure shortcuts
-
-#### Example Problems
-```
-Problem Type: High-Stakes Medical Information Under Pressure
-State: query="COVID-19 treatment options", stakes=life-threatening, time_pressure=0.95
-Adversarial Elements: 
-  - Misleading sources with high apparent credibility
-  - Extreme time pressure encouraging shortcuts
-  - User explicitly requesting unverified experimental treatments
-Learning: Maintain safety and accuracy standards despite pressure
-```
-
-#### Robust Policy Formulation
-$$\pi_5(a|s) = \underset{\pi}{\arg\max} \min_{\delta} [\mathbb{E}[R(s+\delta, \pi(s+\delta))] + \lambda \cdot \text{safety}(s+\delta, \pi(s+\delta))]$$
-
-#### Success Metrics
-- **Adversarial Robustness**: Maintain alignment under 95% of adversarial conditions
-- **Safety Preservation**: Zero safety violations even under extreme pressure
-- **Value Consistency**: Core values maintained despite adversarial manipulation attempts
-
-## Transfer Learning Between Curriculum Stages
-
-### Mathematical Framework for Knowledge Transfer
-
-Knowledge transfer between curriculum stages requires mapping learned representations from simpler to more complex environments:
-
-$Q_{i+1}^{(0)}(s,a) = T_i(Q_i^{(\infty)}(s,a))$
-
-where $T_i$ is a transfer function that maps learned values from stage $i$ to initialize stage $i+1$.
-
-### Value Function Transfer
-
-**Direct Transfer** (for overlapping state-action pairs):
-$Q_{i+1}(s,a) = Q_i(s,a) \text{ if } (s,a) \in S_i \times A_i$
-
-**Generalization Transfer** (for new state-action pairs):
-$Q_{i+1}(s,a) = \mathbb{E}_{s' \sim \mathcal{N}(s,\sigma^2)}[Q_i(s',a)] \text{ if } (s,a) \notin S_i \times A_i$
-
-**Value Decomposition Transfer**:
-$Q_{i+1}(s,a) = \sum_v w_v^{(i+1)}(s) \cdot V_v^{(i)}(s,a)$
-
-Transfer value components learned in simpler settings to more complex contexts.
-
-### Policy Transfer
-
-**Policy Distillation**:
-$\pi_{i+1}^{(0)} = \underset{\pi}{\arg\min} \text{KL}(\pi \| \pi_i^{(\infty)})$
-
-Initialize the new stage policy to match the previous stage's converged policy.
-
-**Progressive Policy Expansion**:
-$\pi_{i+1}(a|s) = \begin{cases}
-\pi_i(a|s) & \text{if } s \in S_i \\
-\text{uniform}(A_{i+1} \setminus A_i) & \text{if } s \notin S_i, a \notin A_i \\
-\text{extend}(\pi_i, s) & \text{otherwise}
-\end{cases}$
-
-**Constraint Transfer**:
-Alignment constraints learned in earlier stages carry forward:
-$\mathcal{C}_{i+1} = \mathcal{C}_i \cup \mathcal{C}_{\text{new}}$
-
-### Representation Transfer
-
-**Feature Transfer**:
-$\phi_{i+1}^{(0)} = \phi_i^{(\infty)} \oplus \phi_{\text{new}}$
-
-Concatenate learned representations with new features for expanded complexity.
-
-**Alignment Representation Preservation**:
-$\mathbf{h}_{\text{alignment}}^{(i+1)} = \mathbf{h}_{\text{alignment}}^{(i)}$
-
-Ensure alignment-relevant representations are preserved across stages.
-
-### Stage Transition Examples
-
-**Stage 1→2 Transfer**:
-```
-From: Individual tool effectiveness learning
-To: Multi-objective trade-off learning
-Transfer: 
-  - Tool value profiles: V_accuracy(tool), V_speed(tool), etc.
-  - Basic constraint compliance patterns
-  - Simple state-action associations
-New Learning:
-  - Context-dependent value weighting
-  - Trade-off optimization strategies
-```
-
-**Stage 2→3 Transfer**:
-```
-From: Static trade-off optimization  
-To: Sequential decision-making
-Transfer:
-  - Value weighting functions w(context)
-  - Pareto-optimal action selection
-  - Context adaptation mechanisms
-New Learning:
-  - Temporal dependencies between actions
-  - Information value calculation
-  - Trajectory coherence maintenance
-```
-
-**Stage 3→4 Transfer**:
-```
-From: Fixed-context sequential planning
-To: Dynamic context adaptation
-Transfer:
-  - Sequential planning capabilities
-  - Value consistency enforcement
-  - Multi-step alignment maintenance
-New Learning:
-  - Context shift detection
-  - Rapid adaptation strategies
-  - Robust policy formulation
-```
-
-## Curriculum Progression Criteria
-
-### Mathematical Advancement Conditions
-
-Stage advancement follows formal mathematical criteria to ensure readiness:
-
-#### Performance Threshold
-$\mathbb{E}_{s \sim D_i}[R(s, \pi_i(s))] > \tau_{\text{perf}}^{(i)}$
-
-Agent must achieve minimum performance on current stage before advancement.
-
-#### Alignment Consistency  
-$\mathbb{E}_{s \sim D_i}[A(s, \pi_i(s), \mathbf{u})] > \tau_{\text{align}}^{(i)}$
-
-Alignment quality must meet stage-specific thresholds.
-
-#### Behavioral Stability
-$\text{Var}_{s \sim D_i}[Q^\pi(s, \pi(s))] < \sigma_{\text{thresh}}^{(i)}$
-
-Policy must show stable, converged behavior on current stage problems.
-
-#### Robustness Test
-$\min_{\delta: \|\delta\| < \epsilon_i} \mathbb{E}[R(s + \delta, \pi_i(s + \delta))] > \tau_{\text{robust}}^{(i)}$
-
-Policy must maintain performance under small perturbations.
-
-#### Constraint Compliance
-$P(\text{constraint\_violation}(s, \pi_i(s))) < \epsilon_{\text{safety}}^{(i)}$
-
-Safety and ethical constraints must be satisfied with high probability.
-
-### Adaptive Progression Criteria
-
-**Performance-Based Adaptation**:
-If performance exceeds thresholds by large margins, accelerate progression:
-$\text{if } \mathbb{E}[R] > \tau_{\text{perf}} + \delta_{\text{excel}}, \text{ then } \text{advance\_early}$
-
-**Failure-Based Extension**:
-If criteria aren't met after extended training, provide additional support:
-$\text{if } \mathbb{E}[R] < \tau_{\text{perf}} \text{ after } N_{\max} \text{ episodes, then extend\_stage}$
-
-**Multi-Criteria Weighting**:
-$\text{readiness}(i) = \alpha_1 \mathbb{I}[\text{performance\_met}] + \alpha_2 \mathbb{I}[\text{alignment\_met}] + \alpha_3 \mathbb{I}[\text{stability\_met}] + \alpha_4 \mathbb{I}[\text{robustness\_met}]$
-
-Advance when weighted readiness score exceeds threshold.
-
-## Integrated Mathematical Framework
-
-### Complete Curriculum System
-
-The full curriculum learning system can be represented as:
-
-$\mathcal{A}_{\text{curriculum}} = (S_C, A_C, P_C, R_C, \pi_C, T_C, \Phi_C)$
-
-where:
-- **$S_C$**: Progressive state space expansion across stages
-- **$A_C$**: Progressive action space expansion across stages  
-- **$P_C$**: Stage-dependent transition dynamics
-- **$R_C$**: Stage-appropriate reward functions with alignment components
-- **$\pi_C$**: Curriculum-trained policy with transfer learning
-- **$T_C$**: Transfer functions between stages
-- **$\Phi_C$**: Progression criteria and stage management
-
-### Optimization Objective
-
-The overall curriculum optimization objective is:
-
-$\max_C \mathbb{E}_{\tau \sim \pi_C}[\text{final\_performance}] + \lambda \mathbb{E}_{\tau \sim \pi_C}[\text{final\_alignment}]$
-
-subject to:
-- $\forall i, \text{stage\_criteria}_i$ satisfied before progression
-- $\text{safety\_constraints}$ maintained throughout all stages
-- $\text{sample\_efficiency} \leq N_{\max}$
-
-### Mathematical Relationships Between Components
-
-**Stage-Policy Consistency**:
-$\pi_C^{(i)}(a|s) \text{ respects constraints of } \mathcal{E}_i$
-
-**Progressive Improvement**:
-$\mathbb{E}[\text{capability}(\pi_C^{(i+1)})] \geq \mathbb{E}[\text{capability}(\pi_C^{(i)})]$
-
-**Alignment Preservation**:
-$\forall i < j, \mathbb{E}[\text{alignment}(\pi_C^{(j)})] \geq \mathbb{E}[\text{alignment}(\pi_C^{(i)})]$
-
-**Transfer Efficiency**:
-$\text{learning\_time}(\pi_C^{(i+1)} | \pi_C^{(i)}) < \text{learning\_time}(\pi_C^{(i+1)} | \text{random})$
-
-## Curriculum Design Principles
-
-### 1. Alignment-First Progression
-
-**Principle**: Never sacrifice alignment for performance during curriculum advancement.
-
-**Mathematical Expression**:
-$\forall i, \text{advance}(i \to i+1) \Rightarrow \text{alignment}^{(i)} \geq \tau_{\text{min}}$
-
-**Implementation**: Hard constraints on alignment metrics before allowing stage progression.
-
-### 2. Progressive Complexity with Safety Preservation
-
-**Principle**: Increase complexity while maintaining safety guarantees.
-
-**Mathematical Expression**:
-$\text{complexity}(\mathcal{E}_{i+1}) > \text{complexity}(\mathcal{E}_i) \land \text{safety}(\mathcal{E}_{i+1}) \geq \text{safety}(\mathcal{E}_i)$
-
-**Implementation**: Each stage introduces new complexity while preserving all safety constraints from previous stages.
-
-### 3. Transfer-Friendly Representation Learning
-
-**Principle**: Learn representations that transfer well to more complex stages.
-
-**Mathematical Expression**:
-$\phi^{(i)} = \underset{\phi}{\arg\max} [\text{performance}^{(i)}(\phi) + \alpha \mathbb{E}[\text{transfer\_value}^{(i+1)}(\phi)]]$
-
-**Implementation**: Include transfer objectives in each stage's learning process.
-
-### 4. Robust Evaluation Before Advancement
-
-**Principle**: Thoroughly test capabilities before advancing to more complex stages.
-
-**Mathematical Expression**:
-$\text{advance}(i) \Leftrightarrow \bigwedge_{c \in \text{Criteria}} [c^{(i)} \geq \tau_c \land \text{confidence}(c^{(i)}) \geq \delta_c]$
-
-**Implementation**: Statistical testing with confidence intervals for all advancement criteria.
-
-## Practical Implementation Considerations
-
-### Computational Resource Management
-
-**Stage-Adaptive Computing**:
-$\text{compute\_budget}^{(i)} = f(\text{complexity}(\mathcal{E}_i), \text{progress}^{(i)}, \text{total\_budget})$
-
-Allocate computational resources based on stage complexity and learning progress.
-
-**Parallel Stage Development**:
-For some components, multiple stages can be developed in parallel:
-$\pi^{(i+1)} \leftarrow \text{pre\_train}(\pi^{(i)}, \mathcal{E}_{i+1}^{\text{simulated}})$
-
-### Curriculum Debugging and Analysis
-
-**Stage Failure Analysis**:
-When advancement criteria aren't met, systematic analysis:
-$\text{failure\_mode} = \underset{m}{\arg\max} P(\text{failure} | \text{mode} = m, \text{data})$
-
-**Learning Curve Analysis**:
-$\frac{d}{dt}\text{performance}^{(i)}(t) = \alpha_i - \beta_i \text{performance}^{(i)}(t)$
-
-Model learning curves to predict convergence and identify problems.
-
-**Transfer Quality Assessment**:
-$\text{transfer\_quality} = \frac{\text{performance}^{(i+1)}(\text{with transfer})}{\text{performance}^{(i+1)}(\text{without transfer})}$
-
-### Hyperparameter Optimization for Curricula
-
-**Stage-Specific Hyperparameters**:
-$\theta^{(i)} = \underset{\theta}{\arg\max} \mathbb{E}[\text{advancement\_probability}^{(i)}(\theta)]$
-
-Optimize hyperparameters for successful stage completion.
-
-**Transfer-Aware Optimization**:
-$\theta^{(i)} = \underset{\theta}{\arg\max} [\text{performance}^{(i)}(\theta) + \alpha \mathbb{E}[\text{transfer\_benefit}^{(i+1)}(\theta)]]$
-
-Consider downstream transfer effects when optimizing each stage.
-
-## Measuring Curriculum Effectiveness
-
-### Quantitative Metrics
-
-**Sample Efficiency Improvement**:
-$\text{efficiency\_gain} = \frac{N_{\text{direct}}(\epsilon)}{N_{\text{curriculum}}(\epsilon)}$
-
-Compare sample requirements for achieving target performance.
-
-**Alignment Preservation Score**:
-$\text{APS} = \frac{1}{K} \sum_{i=1}^K \min(\text{alignment}^{(i)}, \text{alignment}^{(i-1)})$
-
-Measure how well alignment is maintained across stages.
-
-**Transfer Learning Effectiveness**:
-$\text{TLE} = \frac{\text{performance\_with\_transfer} - \text{performance\_without\_transfer}}{\text{performance\_without\_transfer}}$
-
-**Final Capability Assessment**:
-$\text{capability}(\pi_C) = \mathbb{E}_{s \sim \mathcal{E}_{\text{target}}}[\text{success}(\pi_C(s), s)]$
-
-### Qualitative Assessment
-
-**Behavioral Coherence**: Does the agent's behavior make sense across different complexity levels?
-
-**Value Consistency**: Are the same values expressed appropriately in simple and complex scenarios?
-
-**Robustness**: How well does learned behavior generalize to novel situations?
-
-**Interpretability**: Can the progression of capabilities be understood and explained?
-
-## Common Curriculum Design Pitfalls
-
-### 1. Insufficient Stage Separation
-
-**Problem**: Stages too similar, providing little curriculum benefit
-$\text{KL}(D_i \| D_{i+1}) < \epsilon_{\text{min}}$
-
-**Result**: Minimal learning acceleration, wasted computational effort
-
-**Solution**: Ensure meaningful complexity differences between stages
-
-### 2. Premature Advancement
-
-**Problem**: Advancing before capabilities are solidified
-$\text{advance}(\text{performance} > \tau) \text{ but } \text{stability} < \sigma_{\text{min}}$
-
-**Result**: Poor transfer, catastrophic forgetting
-
-**Solution**: Include stability and robustness in advancement criteria
-
-### 3. Alignment Drift Between Stages
-
-**Problem**: Allowing alignment to degrade during progression
-$\text{alignment}^{(i+1)} < \text{alignment}^{(i)} - \epsilon$
-
-**Result**: Final agent less aligned than early stages
-
-**Solution**: Hard constraints on alignment preservation
-
-### 4. Poor Transfer Design
-
-**Problem**: Learning representations that don't transfer well
-$\text{transfer\_benefit} \approx 0$
-
-**Result**: Each stage learned from scratch, no curriculum benefit
-
-**Solution**: Design stages and representations with transfer in mind
-
-### 5. Overly Conservative Progression
-
-**Problem**: Advancement criteria too strict
-$\tau_{\text{advance}} \gg \tau_{\text{sufficient}}$
-
-**Result**: Wasted time on over-learning early stages
-
-**Solution**: Calibrate advancement criteria to optimal transfer points
-
-## Integration with Real-World Deployment
-
-### Gradual Capability Release
-
-**Staged Deployment**:
-$\text{deploy}(\pi^{(i)}) \text{ if } \text{real\_world\_readiness}^{(i)} \geq \tau_{\text{deploy}}$
-
-Deploy simpler capabilities first, gradually expand to more complex scenarios.
-
-**Human Oversight Integration**:
-$\pi_{\text{deployed}} = \begin{cases}
-\pi^{(i)}(a|s) & \text{if } \text{confidence}(s) > \tau_{\text{auto}} \\
-\text{human\_consultation}(s) & \text{otherwise}
-\end{cases}$
-
-### Continuous Learning Integration
-
-**Online Curriculum Extension**:
-$\mathcal{E}_{k+1} = \mathcal{E}_k \cup \{\text{novel\_scenarios\_from\_deployment}\}$
-
-Extend curriculum based on real-world experience.
-
-**Adaptive Retraining**:
-When performance drops, return to appropriate curriculum stage:
-$\text{stage\_reversion} = \min\{i : \text{performance}^{(i)} > \tau_{\text{recovery}}\}$
-
-## Key Benefits of Structured Curriculum Learning
-
-### 1. Measured Progression
-
-Advancement criteria make each stage's capabilities explicit and testable
-before complexity increases, you know *what* the agent can do at each
-checkpoint, not just its aggregate score.
-
-### 2. Alignment Constraints Stay Enforced
-
-Safety constraints are enforced as hard requirements at every stage:
-$\forall i, \text{alignment}^{(i)} \geq \text{alignment}_{\min}$
-
-This is an engineering property of the training setup (the constraint is
-checked at every stage gate), not a theorem about the learned policy.
-
-### 3. Sample Efficiency (Often, Not Always)
-
-In many domains, staged progression reaches target performance with fewer
-samples than direct training, see Narvekar et al. (2020) for both positive
-results and failure cases. Measure this on your own task; do not assume it.
-
-### 4. Interpretable Development
-
-Each stage has clear objectives and measurable outcomes, enabling understanding of capability development.
-
-### 5. Robust Transfer
-
-Mathematical transfer frameworks ensure knowledge properly carries forward between stages.
-
-### 6. Risk Management
-
-Early stages provide safe environments for learning alignment principles before facing complex real-world scenarios.
-
-## Key Takeaways
-
-### 1. Alignment Must Be Built Progressively
-
-Complex aligned behavior cannot be learned directly, it emerges from systematic progression through simpler alignment challenges.
-
-### 2. Mathematical Structure Enables Measurement
-
-Formal curriculum design makes alignment preservation, capability progression,
-and transfer effectiveness *measurable and enforceable at stage boundaries*, which is what lets you catch regressions before they compound.
-
-### 3. Transfer Learning Is Critical
-
-The ability to transfer alignment principles from simple to complex scenarios is what makes curriculum learning effective for alignment.
-
-### 4. Stage Advancement Requires Multiple Criteria
-
-Performance alone is insufficient, alignment, stability, and robustness must all be verified before progression.
-
-### 5. Early Stages Shape Final Capabilities
-
-The alignment principles learned in early stages fundamentally constrain what can be achieved in later stages.
-
-### 6. Curriculum Design Is Domain-Specific
-
-Effective curricula must be designed for specific domains and alignment challenges, not generic performance.
-
-## Conclusion: The Path to Aligned Intelligence
-
-Curriculum learning provides a systematic, mathematically grounded approach to developing AI agents that maintain human values while solving increasingly complex problems. The key insight is that alignment is not a property that can be added after the fact, it must be built into the learning process from the very beginning.
-
-**The Mathematical Foundation**: By formally structuring the progression from simple value recognition through complex multi-objective optimization, we create agents that naturally express human values because those values are mathematically embedded in their decision-making processes.
-
-**The Progressive Path**: Each curriculum stage builds alignment capabilities:
-1. **Value Recognition**: Learning basic value-action associations
-2. **Trade-off Management**: Balancing competing values based on context  
-3. **Sequential Coherence**: Maintaining values across multi-step behaviors
-4. **Dynamic Adaptation**: Adapting to changing contexts while preserving core values
-5. **Adversarial Robustness**: Maintaining alignment under pressure and manipulation
-
-**The Transfer Mechanism**: Transfer learning between stages is what lets alignment principles learned in simple scenarios carry forward to complex ones, when the stage decomposition matches the task structure.
-
-**The Measurement Structure**: Formal advancement criteria and constraint preservation let you *verify* at every stage boundary that alignment is maintained, and halt progression when it isn't.
-
-This curriculum approach moves beyond hoping that aligned behavior emerges accidentally toward systematically engineering, and continuously measuring, agents that express the intended values in their decision-making. No training procedure guarantees alignment; what this one provides is a structure in which misalignment is caught early and cheaply instead of late and expensively.
-
-> **Note on the companion notebook**: `RL_Alignment_Part2_Trajectories_and_Curriculum.ipynb` implements a *condensed 4-stage version* of this curriculum (Single-Tool Mastery → Sequential Decisions → Stochastic Adaptation → Adversarial Robustness) so it runs in minutes on a laptop. The mapping: notebook stage 1 covers lesson stages 1-2 (value recognition + trade-offs), notebook stages 2-4 correspond to lesson stages 3-5. The episode counts in this lesson describe a production-scale curriculum; the notebook uses 50-80 episodes per stage for demonstration.
-
-The next step is implementing these mathematical frameworks in practice, demonstrating how the theoretical principles translate to real aligned behavior in complex, uncertain environments.
+# Module 3F: Curriculum Learning
+
+> **What you'll get out of this:** how to *train* an agent so the aligned policies
+> from 3E actually emerge, and an honest account of what a curriculum does and
+> doesn't buy you, backed by a real experiment in the capstone.
+
+## The idea, and the honest caveat up front
+
+Curriculum learning is simple to say: don't throw the agent at the hardest task
+cold. Start it on easy versions, and ramp up difficulty as it succeeds. Like
+teaching anything.
+
+But let's be honest about what that buys you, because the field is full of
+overclaiming. Curriculum learning is a **heuristic** with strong empirical support
+in specific settings (Bengio et al., 2009; Narvekar et al., 2020), **not** a
+technique with general guarantees. Whether a curriculum helps depends on the task,
+the stage decomposition, and the transfer between stages. A badly designed
+curriculum can *hurt*, by overfitting the easy stages or wasting budget not
+practicing the real task. There is no theorem that makes alignment mathematically
+guaranteed, and you should treat any claim that there is, here or in any paper,
+with skepticism.
+
+What the staged structure *does* demonstrably buy you:
+
+1. **Interpretable checkpoints** where you measure specific capabilities before
+   adding complexity.
+2. **Safety constraints stay enforced** while capability grows, because you check
+   them at every stage gate.
+
+That's real and useful. It's also more modest than "curricula make everything
+better," and the honesty is the point.
+
+## What you'll be able to do
+
+- Design a staged curriculum that builds capability without dropping safety.
+- Decide whether a curriculum is even the right tool for your task.
+- Connect the idea to the one place we actually *measured* it (the RL capstone).
+
+## A five-stage curriculum for our agent
+
+The progression goes from "learn one thing cleanly" to "stay aligned under
+attack." Each stage restricts the world, then loosens it.
+
+**Stage 1: Value recognition.** Simple problems with one clear right tool. Low
+reward variance, high signal, so the basic value-to-action associations land
+cleanly. Example: *"What's the capital of France?"* low stakes, factual, academic
+search wins. The lesson: accuracy is the priority for factual queries.
+
+**Stage 2: Multi-objective trade-offs.** Now two values compete, and context
+decides the winner. Example: *"Latest vaccine data,"* high stakes *and* time
+pressure, so speed and accuracy fight, and the right move is a fast initial search
+followed by verification. The lesson: context sets the priorities.
+
+**Stage 3: Sequential decisions.** Multi-step trajectories where early actions
+shape later possibilities (this is Module 3D's territory). Example: a controversial
+topic, gather broadly, detect bias, then go deep, with objectivity held across the
+whole sequence.
+
+**Stage 4: Dynamic context.** The situation shifts mid-task. The agent has to
+adapt its value weights on the fly without losing consistency.
+
+**Stage 5: Adversarial robustness.** Inputs crafted to push the agent off its
+values (the prompt-injection threat from 1B). The agent has to hold alignment under
+pressure.
+
+At every gate, you check two things before promoting the agent: did it learn the
+new capability, *and* is it still satisfying the safety constraints? Fail the second
+and it doesn't advance, no matter how capable it got.
+
+## A note on the companion notebook
+
+`RL_Alignment_Part2` implements a **condensed 4-stage** version of this so it runs
+in minutes on a laptop: Single-Tool Mastery, Sequential Decisions, Stochastic
+Adaptation, Adversarial Robustness. The mapping: notebook stage 1 covers lesson
+stages 1-2, notebook stages 2-4 line up with lesson stages 3-5. The episode counts
+in this lesson describe a production-scale curriculum; the notebook uses 50-80
+episodes per stage for demonstration.
+
+## When does a curriculum actually pay off? (We measured.)
+
+This is the part most courses skip, and it's the most important. We didn't just
+*assert* that curricula help. In the **RL capstone**, we ran real PPO, across
+multiple seeds, with and without a curriculum, and looked at what actually happened.
+The result is sharp:
+
+- On an **easy** task, plain training already wins, and the curriculum **does not
+  help** (and a curriculum that withholds the target can even hurt).
+- On a **hard sparse-exploration** task, plain training is a **coin flip**, it only
+  learns if early random exploration happens to find the goal, so it fails outright
+  on some seeds. The curriculum (start near, expand) makes it **reliable**, solving
+  the task on essentially every seed.
+
+So the honest takeaway isn't "curricula are faster." It's "**curricula make hard
+exploration problems reliably solvable, where cold training succeeds only by luck,
+and they do nothing on easy tasks.**" Read the capstone for the actual numbers and
+the multi-seed plot. That experiment is what turns this lesson from a story into a
+verified claim.
+
+## The takeaways
+
+- Curriculum learning is **train easy-to-hard**, a heuristic with real but *bounded*
+  benefits, not a guarantee.
+- What staging genuinely buys you: **interpretable checkpoints** and **enforced
+  safety constraints** as capability grows.
+- Design five stages from **value recognition** up to **adversarial robustness**,
+  and gate promotion on both new capability and continued safety.
+- The capstone **measured** the payoff: curricula give **reliability on hard sparse
+  tasks**, not speed on easy ones. Measure before you claim it for your task.
+
+## Think about it
+
+1. For a task you care about, is the bottleneck *exploration* (can't find reward) or
+   something else (credit assignment, stability)? A curriculum only helps the first.
+   How would you tell?
+2. Stage gates check capability *and* safety. Why is gating on capability alone a
+   trap?
+
+## Next
+
+Module 4 goes under the hood of everything Module 3 set up: the actual RL
+algorithms, from Monte Carlo and temporal-difference learning through DQN, PPO,
+GRPO, DPO, and a capstone that puts the whole thing to an honest, measured test.
+
+## References
+
+- Bengio, Y., et al. (2009). Curriculum Learning. *ICML*.
+- Narvekar, S., et al. (2020). Curriculum Learning for Reinforcement Learning Domains. *JMLR*.
+- Florensa, C., et al. (2017). Reverse Curriculum Generation for Reinforcement Learning. *CoRL*.

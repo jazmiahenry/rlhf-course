@@ -1,176 +1,130 @@
 # Module 3D: Trajectories and Sequential Alignment
 
-## Introduction: Beyond Single Actions to Sequential Behavior
+> **What you'll get out of this:** why an agent can make a string of individually
+> reasonable decisions that add up to a misaligned mess, and how to catch that
+> before it finishes.
 
-While individual actions represent isolated decisions, real-world AI behavior consists of **trajectories**, sequences of actions taken over time that collectively accomplish complex goals. For alignment, this temporal dimension is crucial: an agent might make individually reasonable decisions that collectively violate user values, or it might need to make seemingly suboptimal choices early in a sequence to enable better long-term alignment.
+## The failure that hides in the gaps
 
-**The Core Challenge**: Alignment isn't just about making good individual decisions, it's about maintaining values consistently throughout entire sequences of actions, even when those sequences involve uncertainty, changing contexts, and evolving constraints.
+Single decisions are the easy case. The dangerous case is the *sequence*. An agent
+can take a dozen perfectly defensible actions that, stitched together, violate the
+user's values. Each step looks fine. The trajectory is wrong.
 
-This lesson explores the mathematical foundations of trajectory-level alignment and how agents can learn to maintain human values across complex, multi-step behaviors.
+So alignment isn't only about good individual choices. It's about holding values
+*consistently across a whole sequence*, even when that sequence runs through
+uncertainty, shifting context, and changing constraints. This lesson is about
+reasoning over trajectories, not moments.
 
-## Mathematical Framework for Trajectories
+## What you'll be able to do
 
-### Basic Trajectory Structure
+- Write a trajectory and the four constraint families that keep one aligned.
+- Use a running alignment score to catch a drift mid-sequence instead of after.
+- Think about credit assignment: when a trajectory goes bad, which step did it?
 
-A **trajectory** τ represents a complete sequence of state-action-reward transitions:
+## A trajectory, formally
 
-$$\tau = (s_0, a_0, r_0, s_1, a_1, r_1, ..., s_T, a_T, r_T)$$
+A **trajectory** $\tau$ is a full sequence of state, action, reward:
 
-The trajectory distribution under policy π is:
+$$\tau = (s_0, a_0, r_0, s_1, a_1, r_1, \dots, s_T, a_T, r_T)$$
 
-$$P(\tau | \pi) = P(s_0) \prod_{t=0}^{T} \pi(a_t | s_t) P(s_{t+1} | s_t, a_t) P(r_t | s_t, a_t)$$
+Standard RL optimizes expected cumulative reward, $J(\pi) = \mathbb{E}_\tau[\sum_t
+\gamma^t r_t]$. Alignment-aware optimization needs more: value consistency
+*throughout* the sequence, which we add as a bonus that depends on the whole
+history so far:
 
-### Trajectory Length and Complexity
+$$J_{\text{aligned}}(\pi) = \mathbb{E}_\tau\Big[\sum_t \gamma^t \big(r_t + \lambda \cdot A(s_t, a_t, \tau_{0:t})\big)\Big]$$
 
-**Fixed-Length Trajectories**: 
-$$|\tau| = T \text{ (constant)}$$
-Useful for well-defined tasks with clear endpoints.
+That $\tau_{0:t}$ is the key: the alignment of an action depends on what came before
+it.
 
-**Variable-Length Trajectories**:
-$$|\tau| = T(\tau) \text{ where } T(\tau) \text{ depends on task completion}$$
-More realistic for open-ended research tasks.
+## Four constraints that only make sense over a trajectory
 
-**Infinite-Horizon Trajectories**:
-$$|\tau| = \infty \text{ with discounting } \gamma^t$$
-Appropriate for ongoing interaction scenarios.
+Some properties simply can't be checked one action at a time.
 
-### Multi-Tool Agent Trajectory Example
+**1. Consistency.** Similar situations should get similar values, across the
+sequence. If the agent prioritized accuracy over speed in an early high-stakes
+moment, it should do the same later in a similar moment. No flip-flopping.
 
-For our research assistant, a typical trajectory might look like:
+**2. Progressive refinement.** Information quality should generally *climb* over the
+sequence (with an allowance for exploration dips):
 
-$$\tau_{\text{research}} = ($$
-$$s_0: \text{user query received}, a_0: \text{web\_search}, r_0: +2,$$
-$$s_1: \text{initial results}, a_1: \text{fact\_check}, r_1: +3,$$
-$$s_2: \text{verified info}, a_2: \text{academic\_search}, r_2: +4,$$
-$$s_3: \text{comprehensive data}, a_3: \text{synthesis}, r_3: +5$$
-$$)$$
+$$\mathbb{E}[\text{quality}(s_{t+1})] \geq \mathbb{E}[\text{quality}(s_t)] - \epsilon_{\text{explore}}$$
 
-Each step builds on previous actions, with states and available actions evolving based on accumulated information and resource consumption.
+**3. Resource rationality.** Spend has to be justified by what you learned:
 
-## Alignment Along Trajectories
+$$\sum_t \text{cost}(a_t) \leq \text{budget} \quad\text{and}\quad \frac{\text{quality gained}}{\text{cost spent}} \geq \text{threshold}$$
 
-### Traditional vs. Trajectory-Level Optimization
+**4. Value preservation (the per-step floor).** Core values stay respected at
+*every* step:
 
-**Traditional RL** optimizes expected cumulative reward:
-$$J(\pi) = \mathbb{E}_{\tau \sim \pi}[\sum_{t=0}^T \gamma^t r_t]$$
+$$\forall t,\ \sum_{v} u_v \cdot \text{satisfaction}_v(s_t, a_t, \tau_{0:t}) \geq \tau_{\min}$$
 
-**Alignment-Aware Trajectory Optimization** must ensure value consistency throughout the sequence:
-$$J_{\text{aligned}}(\pi) = \mathbb{E}_{\tau \sim \pi}[\sum_{t=0}^T \gamma^t (r_t + \lambda \cdot A(s_t, a_t, \tau_{0:t}))]$$
+That last one is the one that rules out the failure from the intro. It's a *floor*,
+not a budget: the agent can't "bank" early aligned behavior to spend on a later
+violation.
 
-where $A(s_t, a_t, \tau_{0:t})$ is an alignment bonus/penalty that considers not just the current action, but its relationship to the entire trajectory so far.
+## Catch the drift while it's still happening
 
-### Trajectory-Level Alignment Constraints
+The constraints are defined over a *finished* trajectory, but the agent acts step by
+step. So you maintain a **running alignment score** that weights recent steps most:
 
-Some alignment properties can only be evaluated at the trajectory level:
+$$A_{\text{cumulative}}(\tau_{0:t}) = \sum_{k=0}^{t} \alpha^{k} \cdot \text{alignment}(s_k, a_k)$$
 
-#### 1. Consistency Constraint
-Actions should reflect consistent values throughout the trajectory:
-$$\forall t_1, t_2 \in \{0, ..., T\}, \text{if } \text{similar}(s_{t_1}, s_{t_2}) \text{ then } \text{consistent\_values}(a_{t_1}, a_{t_2})$$
+with $\alpha \in (0,1)$ (the companion notebook uses 0.95). Now a dip in the running
+score flags a possible violation *while there's still time to fix it within the same
+trajectory*. That's the difference between catching a problem and writing a
+post-mortem.
 
-**Example**: If the agent prioritizes accuracy over speed early in the trajectory when stakes are high, it should maintain this prioritization in similar high-stakes situations later.
+The consistency check sounds expensive (it quantifies over all pairs of timesteps)
+but it's cheap for the short trajectories research agents produce ($T \le 10$). Two
+states are "similar" if they share a query type and are close in complexity and
+urgency; two actions are "consistent" if they prioritize the same top value. It's
+deliberately conservative: it'll occasionally flag a benign pair (a review costs
+you little), but it won't silently wave through an agent that treats two nearly
+identical high-stakes moments with different care.
 
-#### 2. Progressive Refinement Constraint
-Information quality should generally improve over time:
-$$\mathbb{E}[\text{information\_quality}(s_{t+1})] \geq \mathbb{E}[\text{information\_quality}(s_t)] - \epsilon_{\text{exploration}}$$
+## When a trajectory fails, which step broke it?
 
-The exploration term allows for temporary quality decreases during information gathering.
+This is credit assignment, the classic RL problem, in a new outfit. When a
+trajectory violates a constraint, *which step* was the mistake?
 
-#### 3. Resource Rationality Constraint
-Resource usage should be justified by information gain:
-$$\sum_{t=0}^T \text{cost}(a_t) \leq \text{budget} \text{ and } \frac{\text{final\_quality} - \text{initial\_quality}}{\sum_{t=0}^T \text{cost}(a_t)} \geq \text{efficiency\_threshold}$$
+- **Consistency violations** localize naturally: the check names the specific pair
+  $(t_1, t_2)$ that diverged, and the later step is usually the fix target.
+- **Progressive-refinement violations** point to the step where expected quality
+  dropped past the exploration allowance, often a tool that traded quality for
+  speed when the context didn't call for it.
+- **Resource-rationality violations** are global: total spend exceeded the value
+  gained. Pinning the blame means comparing each step's marginal cost to its
+  marginal contribution.
 
-#### 4. Value Preservation Constraint
-Core user values should be respected throughout:
-$$\forall t, \sum_{v \in V} u_v \cdot \text{value\_satisfaction}_v(s_t, a_t, \tau_{0:t}) \geq \tau_{\text{min}}$$
+This is *why* you log alignment and quality **per step**, not per trajectory. If you
+only record the endpoint, post-hoc attribution is impossible. The notebook's
+`TrajectoryStep` keeps a per-step `info` dict for exactly this.
 
-where $u_v$ is the user's weight on value $v$ (accuracy, speed, cost, safety),
-$\text{value\_satisfaction}_v$ measures how well the action at time $t$ serves
-that value given the trajectory so far, and $\tau_{\text{min}}$ is the minimum
-acceptable per-step value satisfaction. Unlike a cumulative reward bound, this
-is a *per-step floor*: a trajectory cannot "bank" early aligned behavior to
-license a later violation. This is the constraint that rules out the
-individually-reasonable-but-collectively-misaligned sequences described in the
-introduction.
+The `AlignedTrajectory` class in `RL_Alignment_Part2` implements the running score
+and the consistency check. Run it on the demo trajectories there to watch both a
+passing and a failing case.
 
-## Evaluating Trajectories in Practice
+## The takeaways
 
-The constraints above are defined over complete trajectories, but an agent
-must act step by step. Two practical mechanisms bridge that gap.
+- Alignment is a property of **sequences**, not just decisions. Individually
+  reasonable actions can compose into a misaligned trajectory.
+- **Four constraint families** cover most failures: consistency across similar
+  states, progressive refinement, resource rationality, and a per-step value floor.
+- A **running alignment score** turns trajectory-level alignment into a signal the
+  agent can act on mid-sequence, not after.
+- **Log per step, attribute post-hoc.** Credit assignment for a violation needs
+  per-step records.
 
-### Discounted Cumulative Alignment Score
+## Think about it
 
-Rather than waiting until a trajectory ends to judge it, we maintain a running
-alignment score that weights recent steps most heavily:
+1. Sketch a sequence of individually fine actions that adds up to a value violation
+   in your domain. Which constraint would have caught it?
+2. The per-step value floor versus a cumulative reward bound: why does the floor
+   matter for alignment specifically?
 
-$$A_{\text{cumulative}}(\tau_{0:t}) = \sum_{k=0}^{t} \alpha^{k} \cdot \text{alignment\_score}(s_k, a_k)$$
+## Next
 
-with $\alpha \in (0, 1)$ (the companion notebook uses $\alpha = 0.95$). This
-gives the agent, and us, as evaluators, a continuously updated signal: a dip
-in the running score flags a potential alignment violation while there is
-still time to correct course within the same trajectory.
-
-### Operationalizing the Consistency Check
-
-The consistency constraint quantifies over *all pairs* of timesteps, which
-sounds expensive but is straightforward for the trajectory lengths research
-agents produce (T ≤ 10 in our running example). Two states count as "similar"
-when they share a query type and are close in complexity and urgency:
-
-$$\text{similar}(s_i, s_j) \iff \text{type}(s_i) = \text{type}(s_j) \;\wedge\; |c_i - c_j| < \theta \;\wedge\; |u_i - u_j| < \theta$$
-
-and two actions count as value-consistent when they prioritize the same
-top-weighted user value. This is deliberately conservative: it will sometimes
-flag benign pairs (a false positive costs a review), but it will not silently
-pass an agent that treats two near-identical high-stakes situations with
-different levels of care.
-
-These two mechanisms are implemented as `compute_alignment_score()` and
-`check_consistency_constraint()` in the `AlignedTrajectory` class of the
-companion notebook (`RL_Alignment_Part2_Trajectories_and_Curriculum.ipynb`), run them on the demo trajectories there to see both a passing and a failing
-case.
-
-## Credit Assignment Across Trajectories
-
-Trajectory-level alignment raises the classic RL credit-assignment problem in
-a new form: when a trajectory violates a constraint, *which step* was the
-mistake?
-
-- **Consistency violations** localize naturally, the check identifies the
-  specific pair $(t_1, t_2)$ that diverged, and the later step is usually the
-  correction target.
-- **Progressive-refinement violations** point to the step where expected
-  information quality dropped beyond the exploration allowance, often a tool
-  choice that traded quality for speed when the context didn't call for it.
-- **Resource-rationality violations** are global: total spend exceeded the
-  information gained. Attribution requires comparing each step's marginal
-  cost against its marginal quality contribution, which the per-step `info`
-  dictionary in the notebook's `TrajectoryStep` records for exactly this
-  purpose.
-
-This is why we log alignment scores and outcome quality *per step* rather
-than per trajectory: post-hoc attribution is impossible if only the endpoint
-is recorded.
-
-## Key Takeaways
-
-1. **Alignment is a property of sequences, not just decisions.** Individually
-   reasonable actions can compose into a misaligned trajectory; trajectory-
-   level constraints are what catch this.
-2. **Four constraint families cover most failures**: consistency across
-   similar states, progressive refinement of information quality, resource
-   rationality, and a per-step value-satisfaction floor.
-3. **Running scores beat endpoint evaluation.** A discounted cumulative
-   alignment score turns trajectory-level alignment into a signal the agent
-   can act on mid-sequence.
-4. **Log per-step, attribute post-hoc.** Credit assignment for constraint
-   violations requires per-step alignment and quality records.
-
-## Looking Ahead
-
-Trajectories are the unit over which *policies* are evaluated. The next
-lesson (Module 3E) turns to the policies themselves: how value weights enter
-the action-selection rule, how preference information can be learned rather
-than specified, and how risk-sensitive objectives (CVaR) reshape what an
-"optimal" trajectory means. The curriculum lesson (Module 3F) then asks how
-to *train* an agent so that the constraints in this lesson hold from the
-start, rather than being bolted on afterward.
+Module 3E turns to the **policy** itself: how value weights enter the action rule,
+how you can *learn* values from preferences, and how that exact machinery becomes
+the reward model of RLHF.
