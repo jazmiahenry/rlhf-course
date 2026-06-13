@@ -34,15 +34,21 @@ $$\forall i, \text{alignment\_requirements}(\mathcal{E}_i) \supseteq \text{align
 
 Early stages may have additional alignment constraints to ensure safe learning.
 
-### Formal Learning Guarantees
+### What Curriculum Learning Can and Cannot Promise
 
-**Theorem (Curriculum Convergence)**: Under appropriate conditions, curriculum learning provides stronger convergence guarantees than direct learning:
-
-$$P(\lim_{n \rightarrow \infty} \pi_n^{(C)} \in \Pi_{\text{aligned}}) > P(\lim_{n \rightarrow \infty} \pi_n^{(\text{direct})} \in \Pi_{\text{aligned}})$$
-
-**Sample Complexity Bound**: The number of samples required for $\epsilon$-optimal aligned performance often scales better with curriculum learning:
-
-$$N_{\text{curriculum}}(\epsilon) = O(\text{poly}(1/\epsilon)) \text{ vs. } N_{\text{direct}}(\epsilon) = O(\exp(1/\epsilon))$$
+An honest note before the formalism: curriculum learning is a *heuristic* with
+strong empirical support in specific settings (Bengio et al., 2009,
+"Curriculum Learning"; Narvekar et al., 2020, JMLR survey "Curriculum Learning
+for Reinforcement Learning Domains"), not a technique with general convergence
+guarantees. Whether a curriculum helps depends on the task structure, the
+stage decomposition, and the transfer mechanism — and badly designed curricula
+can *hurt* by overfitting early stages. The framework in this lesson gives you
+a disciplined way to design and evaluate curricula; it does not make alignment
+mathematically guaranteed, and you should treat any such claim — here or in
+any paper — with skepticism. What the staged structure *does* buy you,
+demonstrably, is: (1) interpretable checkpoints where you can measure specific
+capabilities before adding complexity, and (2) the ability to keep safety
+constraints enforced while capability grows.
 
 ## Stage-Specific Mathematical Structures
 
@@ -621,22 +627,27 @@ Extend curriculum based on real-world experience.
 When performance drops, return to appropriate curriculum stage:
 $\text{stage\_reversion} = \min\{i : \text{performance}^{(i)} > \tau_{\text{recovery}}\}$
 
-## Key Benefits of Mathematical Curriculum Learning
+## Key Benefits of Structured Curriculum Learning
 
-### 1. Guaranteed Progression
+### 1. Measured Progression
 
-Mathematical formulation ensures each stage builds on previous capabilities:
-$\text{capability}^{(i+1)} \supseteq \text{capability}^{(i)}$
+Advancement criteria make each stage's capabilities explicit and testable
+before complexity increases — you know *what* the agent can do at each
+checkpoint, not just its aggregate score.
 
-### 2. Alignment Preservation
+### 2. Alignment Constraints Stay Enforced
 
-Formal constraints prevent alignment degradation during learning:
+Safety constraints are enforced as hard requirements at every stage:
 $\forall i, \text{alignment}^{(i)} \geq \text{alignment}_{\min}$
 
-### 3. Sample Efficiency
+This is an engineering property of the training setup (the constraint is
+checked at every stage gate), not a theorem about the learned policy.
 
-Systematic progression often requires fewer samples than direct learning:
-$N_{\text{curriculum}} \ll N_{\text{direct}}$
+### 3. Sample Efficiency (Often, Not Always)
+
+In many domains, staged progression reaches target performance with fewer
+samples than direct training — see Narvekar et al. (2020) for both positive
+results and failure cases. Measure this on your own task; do not assume it.
 
 ### 4. Interpretable Development
 
@@ -656,9 +667,11 @@ Early stages provide safe environments for learning alignment principles before 
 
 Complex aligned behavior cannot be learned directly—it emerges from systematic progression through simpler alignment challenges.
 
-### 2. Mathematical Structure Enables Guarantees
+### 2. Mathematical Structure Enables Measurement
 
-Formal curriculum design provides guarantees about alignment preservation, capability progression, and transfer effectiveness.
+Formal curriculum design makes alignment preservation, capability progression,
+and transfer effectiveness *measurable and enforceable at stage boundaries* —
+which is what lets you catch regressions before they compound.
 
 ### 3. Transfer Learning Is Critical
 
@@ -689,10 +702,12 @@ Curriculum learning provides a systematic, mathematically grounded approach to d
 4. **Dynamic Adaptation**: Adapting to changing contexts while preserving core values
 5. **Adversarial Robustness**: Maintaining alignment under pressure and manipulation
 
-**The Transfer Mechanism**: Mathematical transfer learning ensures that alignment principles learned in simple scenarios generalize to complex real-world situations.
+**The Transfer Mechanism**: Transfer learning between stages is what lets alignment principles learned in simple scenarios carry forward to complex ones — when the stage decomposition matches the task structure.
 
-**The Guarantee Structure**: Formal advancement criteria and constraint preservation provide mathematical guarantees that alignment is maintained throughout the learning process.
+**The Measurement Structure**: Formal advancement criteria and constraint preservation let you *verify* at every stage boundary that alignment is maintained — and halt progression when it isn't.
 
-This curriculum approach moves beyond hoping that aligned behavior will emerge accidentally toward systematically engineering agents that are mathematically guaranteed to express human values in their decision-making. The result is AI systems that are not just capable, but reliably aligned with human interests across the full spectrum of situations they may encounter.
+This curriculum approach moves beyond hoping that aligned behavior emerges accidentally toward systematically engineering — and continuously measuring — agents that express the intended values in their decision-making. No training procedure guarantees alignment; what this one provides is a structure in which misalignment is caught early and cheaply instead of late and expensively.
+
+> **Note on the companion notebook**: `RL_Alignment_Part2_Trajectories_and_Curriculum.ipynb` implements a *condensed 4-stage version* of this curriculum (Single-Tool Mastery → Sequential Decisions → Stochastic Adaptation → Adversarial Robustness) so it runs in minutes on a laptop. The mapping: notebook stage 1 covers lesson stages 1–2 (value recognition + trade-offs), notebook stages 2–4 correspond to lesson stages 3–5. The episode counts in this lesson describe a production-scale curriculum; the notebook uses 50–80 episodes per stage for demonstration.
 
 The next step is implementing these mathematical frameworks in practice, demonstrating how the theoretical principles translate to real aligned behavior in complex, uncertain environments.

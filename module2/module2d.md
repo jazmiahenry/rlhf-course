@@ -46,7 +46,7 @@ Every component produces interpretable outputs that can be inspected, logged, an
 
 ## Document Scoring Pipeline
 
-The document scoring pipeline implements the mathematical models from Module 2d in a scalable, maintainable way.
+The document scoring pipeline implements the mathematical models from Module 2c (and worked through in Module 2e) in a scalable, maintainable way.
 
 ### Pipeline Architecture
 

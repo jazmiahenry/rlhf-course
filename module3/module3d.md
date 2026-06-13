@@ -83,4 +83,95 @@ $$\sum_{t=0}^T \text{cost}(a_t) \leq \text{budget} \text{ and } \frac{\text{fina
 Core user values should be respected throughout:
 $$\forall t, \sum_{v \in V} u_v \cdot \text{value\_satisfaction}_v(s_t, a_t, \tau_{0:t}) \geq \tau_{\text{min}}$$
 
-where $u_v
+where $u_v$ is the user's weight on value $v$ (accuracy, speed, cost, safety),
+$\text{value\_satisfaction}_v$ measures how well the action at time $t$ serves
+that value given the trajectory so far, and $\tau_{\text{min}}$ is the minimum
+acceptable per-step value satisfaction. Unlike a cumulative reward bound, this
+is a *per-step floor*: a trajectory cannot "bank" early aligned behavior to
+license a later violation. This is the constraint that rules out the
+individually-reasonable-but-collectively-misaligned sequences described in the
+introduction.
+
+## Evaluating Trajectories in Practice
+
+The constraints above are defined over complete trajectories, but an agent
+must act step by step. Two practical mechanisms bridge that gap.
+
+### Discounted Cumulative Alignment Score
+
+Rather than waiting until a trajectory ends to judge it, we maintain a running
+alignment score that weights recent steps most heavily:
+
+$$A_{\text{cumulative}}(\tau_{0:t}) = \sum_{k=0}^{t} \alpha^{k} \cdot \text{alignment\_score}(s_k, a_k)$$
+
+with $\alpha \in (0, 1)$ (the companion notebook uses $\alpha = 0.95$). This
+gives the agent — and us, as evaluators — a continuously updated signal: a dip
+in the running score flags a potential alignment violation while there is
+still time to correct course within the same trajectory.
+
+### Operationalizing the Consistency Check
+
+The consistency constraint quantifies over *all pairs* of timesteps, which
+sounds expensive but is straightforward for the trajectory lengths research
+agents produce (T ≤ 10 in our running example). Two states count as "similar"
+when they share a query type and are close in complexity and urgency:
+
+$$\text{similar}(s_i, s_j) \iff \text{type}(s_i) = \text{type}(s_j) \;\wedge\; |c_i - c_j| < \theta \;\wedge\; |u_i - u_j| < \theta$$
+
+and two actions count as value-consistent when they prioritize the same
+top-weighted user value. This is deliberately conservative: it will sometimes
+flag benign pairs (a false positive costs a review), but it will not silently
+pass an agent that treats two near-identical high-stakes situations with
+different levels of care.
+
+These two mechanisms are implemented as `compute_alignment_score()` and
+`check_consistency_constraint()` in the `AlignedTrajectory` class of the
+companion notebook (`RL_Alignment_Part2_Trajectories_and_Curriculum.ipynb`) —
+run them on the demo trajectories there to see both a passing and a failing
+case.
+
+## Credit Assignment Across Trajectories
+
+Trajectory-level alignment raises the classic RL credit-assignment problem in
+a new form: when a trajectory violates a constraint, *which step* was the
+mistake?
+
+- **Consistency violations** localize naturally — the check identifies the
+  specific pair $(t_1, t_2)$ that diverged, and the later step is usually the
+  correction target.
+- **Progressive-refinement violations** point to the step where expected
+  information quality dropped beyond the exploration allowance — often a tool
+  choice that traded quality for speed when the context didn't call for it.
+- **Resource-rationality violations** are global: total spend exceeded the
+  information gained. Attribution requires comparing each step's marginal
+  cost against its marginal quality contribution, which the per-step `info`
+  dictionary in the notebook's `TrajectoryStep` records for exactly this
+  purpose.
+
+This is why we log alignment scores and outcome quality *per step* rather
+than per trajectory: post-hoc attribution is impossible if only the endpoint
+is recorded.
+
+## Key Takeaways
+
+1. **Alignment is a property of sequences, not just decisions.** Individually
+   reasonable actions can compose into a misaligned trajectory; trajectory-
+   level constraints are what catch this.
+2. **Four constraint families cover most failures**: consistency across
+   similar states, progressive refinement of information quality, resource
+   rationality, and a per-step value-satisfaction floor.
+3. **Running scores beat endpoint evaluation.** A discounted cumulative
+   alignment score turns trajectory-level alignment into a signal the agent
+   can act on mid-sequence.
+4. **Log per-step, attribute post-hoc.** Credit assignment for constraint
+   violations requires per-step alignment and quality records.
+
+## Looking Ahead
+
+Trajectories are the unit over which *policies* are evaluated. The next
+lesson (Module 3E) turns to the policies themselves: how value weights enter
+the action-selection rule, how preference information can be learned rather
+than specified, and how risk-sensitive objectives (CVaR) reshape what an
+"optimal" trajectory means. The curriculum lesson (Module 3F) then asks how
+to *train* an agent so that the constraints in this lesson hold from the
+start, rather than being bolted on afterward.

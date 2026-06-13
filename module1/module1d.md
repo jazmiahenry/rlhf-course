@@ -302,53 +302,45 @@ The frameworks you'll learn in Module 2 apply immediately to:
 - System can learn and adapt mathematical parameters over time
 - Flexibility through systematic parameterization is more reliable than implicit flexibility
 
-## Success Stories: Where Mathematical Alignment Works
+## Where These Domains Need Mathematical Alignment
+
+The four domains below are where inconsistent AI decision-making carries the
+highest documented stakes (see Module 1B for the sourced evidence). In each,
+the value-weighted scoring approach maps cleanly onto the domain's real
+trade-off structure:
 
 ### Healthcare AI
 
-**Problem**: Medical AI giving inconsistent diagnostic support
-**Solution**: Mathematical scoring prioritizing accuracy and safety for medical queries
-**Result**: 85% reduction in diagnostic inconsistency, 40% improvement in doctor confidence
+**The stakes**: Diagnostic support tools whose recommendations vary across
+identical presentations undermine clinical adoption — accuracy and safety
+must dominate speed in the value weights, with the weighting *auditable* for
+regulators.
 
 ### Financial Services
 
-**Problem**: Investment research AI providing conflicting analysis
-**Solution**: Static scoring optimizing for client risk tolerance and investment timeline
-**Result**: 60% reduction in analysis variance, 30% improvement in client satisfaction
+**The stakes**: Research and recommendation systems must encode client risk
+tolerance explicitly; a system that implicitly resolves the
+aggressive-vs-conservative trade-off differently per session is a compliance
+liability, not an assistant (Module 2's worked example builds exactly this
+system).
 
 ### Legal Research
 
-**Problem**: Legal AI inconsistently identifying relevant case precedents  
-**Solution**: Mathematical characterization of legal database quality and relevance
-**Result**: 70% improvement in precedent relevance, 50% reduction in lawyer verification time
+**The stakes**: The 1,300+ documented court cases involving AI-hallucinated
+citations (Module 1B) all share one root cause — no explicit
+credibility/verification weighting in how sources were selected and used.
 
 ### Educational Technology
 
-**Problem**: Research AI providing inappropriate sources for student level
-**Solution**: Scoring system incorporating student expertise and assignment requirements
-**Result**: 45% improvement in source appropriateness, 35% better learning outcomes
+**The stakes**: Source-selection appropriateness depends on student level —
+a context variable that must enter the scoring function explicitly, or the
+same query from a ninth-grader and a doctoral student gets the same sources.
 
-## The Economic Opportunity
-
-### Market Timing
-
-**Current Window**: Organizations desperately need reliable AI, willing to invest in solutions
-**Competitive Advantage**: Early implementations create 18-24 month lead over competitors
-**Market Size**: $2.3 trillion in high-stakes applications currently underserved by inconsistent AI
-
-### Investment Requirements vs. Returns
-
-**Module 2 Implementation**:
-- Investment: $50K-200K development
-- Timeline: 1-4 weeks  
-- Return: 40-60% reduction in human verification costs
-- Break-even: 3-8 months
-
-**Full System Implementation**:
-- Investment: $500K-2M development
-- Timeline: 6-18 months
-- Return: 2-5x improvement in AI utility, access to high-stakes markets
-- Break-even: 12-24 months
+**An honest caveat**: these are *arguments from problem structure*, not
+measured deployment results of this course's framework. When you implement
+the Module 2 system, you will measure its effect on consistency and decision
+quality yourself — that measurement discipline, not promised percentages, is
+what distinguishes engineering from marketing.
 
 ## Setting Expectations: What Module 2 Will Deliver
 
@@ -370,7 +362,7 @@ The frameworks you'll learn in Module 2 apply immediately to:
 
 ### Business Skills You'll Develop
 
-**ROI Analysis**: Calculate value proposition of alignment improvements
+**Measurement Design**: Define and instrument the metrics that show whether alignment improvements worked
 **User Research**: Understand and model user value preferences
 **Change Management**: Transition organizations from inconsistent to systematic AI
 **Risk Assessment**: Identify and mitigate alignment failure modes
@@ -379,9 +371,9 @@ The frameworks you'll learn in Module 2 apply immediately to:
 
 ### The Urgency
 
-**Current State**: AI inconsistency is costing billions and eroding trust
-**Opportunity Window**: Mathematical solutions exist but aren't widely implemented  
-**Competitive Reality**: Early movers gain significant advantages
+**Current State**: Most AI projects fail (RAND: >80%; MIT: ~95% of GenAI pilots show no P&L impact — see Module 1B), overwhelmingly for measurement and objective reasons rather than capability reasons
+**Opportunity Window**: Systematic approaches exist but most deployments don't use them
+**Competitive Reality**: The organizations in MIT's successful 5% treated deployment as a measurement problem — that discipline is learnable
 **Technical Readiness**: Tools and frameworks are mature enough for production use
 
 ### The Path is Clear

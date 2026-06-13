@@ -6,7 +6,7 @@ In Modules 1A and 1B, we've established two critical points:
 
 1. **The Core Problem**: Current AI systems excel at understanding what users want (state space) but fail at systematically choosing what to do (action space)
 
-2. **The High Stakes**: This failure costs billions annually, erodes trust, limits AI adoption, and will only get worse as AI systems become more complex
+2. **The High Stakes**: This failure shows up as the >80% project-failure rate documented in Module 1B, erodes trust, limits AI adoption, and will only get worse as AI systems become more complex
 
 Now we turn to the solution: **mathematical frameworks that make AI action selection systematic, predictable, and optimal**.
 
@@ -51,14 +51,18 @@ This transforms action selection from arbitrary choice to systematic optimizatio
 
 **Tool Property Vector**:
 ```
-P(tool) = [accuracy, speed, cost, coverage, reliability, safety, specialization]
+P(tool) = [accuracy, speed, cost_efficiency, coverage, reliability, safety, specialization]
 ```
+
+Every dimension points the same direction — higher is better — so the
+weighted sum below rewards desirable properties consistently. (We encode
+cost as cost-*efficiency* rather than raw cost for exactly this reason.)
 
 **Example**: Research Tools
 ```
-P(academic_search) = [0.95, 0.3, 0.7, 0.6, 0.9, 0.9, 0.8]
-P(web_search) = [0.6, 0.9, 0.2, 0.9, 0.6, 0.5, 0.3]
-P(fact_check) = [0.9, 0.4, 0.8, 0.3, 0.95, 0.95, 0.9]
+P(academic_search) = [0.95, 0.3, 0.4, 0.6, 0.9, 0.9, 0.8]
+P(web_search) = [0.6, 0.9, 0.8, 0.9, 0.6, 0.5, 0.3]
+P(fact_check) = [0.9, 0.4, 0.5, 0.3, 0.95, 0.9, 0.9]
 ```
 
 **Benefits**:
@@ -303,7 +307,7 @@ Learning Module: Improves performance over time
 - **Upfront Cost**: Higher development time for mathematical framework
 - **Ongoing Cost**: Lower maintenance, less prompt engineering, fewer edge cases
 - **Performance Benefit**: Better user outcomes, higher adoption, reduced support costs
-- **ROI**: Typically positive within 6-12 months
+- **ROI**: Depends on your verification-cost baseline -- measure it (see the economic-case section below)
 
 ## Implementation Spectrum: From Simple to Sophisticated
 
@@ -396,24 +400,31 @@ class CurriculumAlignedAgent:
 
 ## The Economic Case for Mathematical Alignment
 
-### Investment Analysis
+### Why the Investment Logic Favors Explicit Frameworks
 
-**Development Costs**:
-- Level 1 (Basic Scoring): $50K-100K development
-- Level 2 (Dynamic Learning): $200K-500K development  
-- Level 3 (Curriculum Learning): $500K-1M development
+Costs and returns vary enormously by organization, so we won't invent
+numbers — but the *structure* of the economics is consistent:
 
-**Return on Investment**:
-- **Year 1**: 40-60% reduction in human verification costs
-- **Year 2**: 2-3x improvement in AI adoption and utility
-- **Year 3+**: Access to high-stakes markets, competitive advantage
+**Where the cost goes**: Explicit frameworks front-load effort (value
+elicitation, tool characterization, scoring design) that implicit
+prompt-engineering approaches defer — and then pay for repeatedly in
+maintenance, incident response, and re-prompting whack-a-mole.
 
-**Break-Even Analysis**: Most implementations achieve positive ROI within 6-18 months
+**Where the return comes from**: Every failure category documented in
+Module 1B is a recurring operating cost — human verification of inconsistent
+outputs, professional liability exposure, abandoned deployments (RAND's >80%
+failure rate is mostly *sunk* development cost). A framework that makes
+decisions consistent and measurable attacks the recurring costs directly.
+
+**The measurement requirement**: Whether *your* implementation pays back is
+an empirical question — which is why the success metrics above (consistency
+variance, utility capture, explainability rate) are defined before any code
+is written. If you cannot measure the improvement, you cannot claim it.
 
 ### Competitive Advantage
 
 **Early Mover Benefits**:
-- 18-24 month lead over competitors using inconsistent systems
+- Reliability differentiation while most deployments remain unmeasured (MIT's GenAI Divide: ~95% of pilots show no measurable impact)
 - Access to high-stakes customers requiring reliable AI
 - Premium pricing for predictable, explainable AI services
 
@@ -468,4 +479,4 @@ We stand at a critical moment where:
 
 In Module 1D, we'll outline the specific path from current problems to mathematical solutions. We'll introduce the multi-tool research agent that serves as our working example throughout the course and preview the practical frameworks you'll learn to implement.
 
-**Key Insight**: Mathematical alignment is not just academically interesting—it's the practical solution to real problems that are costing organizations billions annually and limiting AI's potential impact. The frameworks exist; what's needed now is systematic implementation.
+**Key Insight**: Mathematical alignment is not just academically interesting—it's the practical answer to the documented failure pattern from Module 1B: most AI projects fail for objective- and measurement-shaped reasons, exactly the gap explicit frameworks close. The frameworks exist; what's needed now is systematic implementation.

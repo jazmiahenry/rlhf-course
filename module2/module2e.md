@@ -135,12 +135,18 @@ Vd = αRd + βSd + w⊤Xd + λ·Ed·Qd
 - **w = 0.2**: Important personalization (client-specific needs)
 - **λ = 0.1**: Low exploration (focus on reliable information during uncertainty)
 
-**Policy Function:**
+**Looking Ahead — Sequential Decision-Making:**
 ```
-π* = argmaxπ E[∑(t=0 to T) γᵗVat(st)]
+π* = argmaxπ E[∑(t=0 to T) γᵗ · V(dt)]
 ```
 
-This ensures the agent learns to maximize long-term value, not just immediate relevance.
+Here π is a *policy* — a rule for choosing which document to surface at each
+step t — V(dt) is the value score of the document chosen at step t, and γ
+(between 0 and 1) discounts future value relative to immediate value. The
+optimal policy π* maximizes expected *cumulative* value over a whole analysis
+session, not just the single best next document. Module 3 develops this
+sequential framing rigorously; in this module we only need the single-step
+scoring function Vd above.
 
 **Design Principles:**
 - **Balanced scoring**: Multiple factors weighted according to user priorities
@@ -163,29 +169,6 @@ This ensures the agent learns to maximize long-term value, not just immediate re
 - **Comparative analysis**: Evaluate aligned vs. naive approaches
 - **Interpretability features**: Users understand why documents were selected
 - **Fallback mechanisms**: Handle edge cases and system failures gracefully
-
-## Alignment in Action: Sample Document Scoring
-
-**Document A (Reuters earnings report):**
-- Relevance: 0.9 (directly about the stock)
-- Credibility: 0.95 (established financial news source)
-- Personalization: 0.8 (matches client sector focus)
-- Exploration: 0.1 (well-covered topic)
-- Quality: 0.9 (recent, complete)
-
-**Document B (Twitter speculation):**
-- Relevance: 0.8 (mentions the stock)
-- Credibility: 0.2 (unverified source)
-- Personalization: 0.6 (tangentially relevant)
-- Exploration: 0.7 (novel perspective)
-- Quality: 0.3 (incomplete, unstructured)
-
-**Scoring with weights α=0.3, β=0.4, w=0.2, λ=0.1:**
-
-**Document A score**: 0.3(0.9) + 0.4(0.95) + 0.2(0.8) + 0.1(0.1)(0.9) = 0.786
-**Document B score**: 0.3(0.8) + 0.4(0.2) + 0.2(0.6) + 0.1(0.7)(0.3) = 0.481
-
-The system correctly prioritizes the verified news despite the speculation being more "novel."
 
 ## Integration of Both Methods
 

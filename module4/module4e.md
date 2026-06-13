@@ -34,13 +34,64 @@ For example, evaluators might compare two different approaches to handling a com
 
 The preference collection process must account for the complexity of orchestration decisions by presenting comparisons that capture different aspects of coordination quality, including efficiency, fairness, safety, and alignment with stated objectives. This requires careful design of evaluation scenarios that reveal human preferences about the trade-offs inherent in orchestration decisions.
 
-### Learning from Orchestration Preferences
+### How DPO Actually Works — No Reward Model, No Preference Model
 
-DPO uses the collected preference data to directly optimize orchestration policies without requiring explicit reward functions. The algorithm learns to predict human preferences about coordination decisions and then optimizes the orchestration policy to favor approaches that humans are likely to prefer.
+It is worth being precise here, because DPO is frequently misdescribed.
+The *classic* RLHF pipeline (Christiano et al., 2017; Ouyang et al., 2022)
+has two stages: (1) train a separate **reward model** on preference pairs
+to predict which response a human prefers, then (2) optimize the policy
+against that reward model with RL (typically PPO), with a KL penalty
+keeping the policy close to a reference model.
 
-This process involves training a preference model that can predict which of two orchestration strategies a human evaluator would prefer, and then using this preference model to guide policy optimization. The orchestration system learns to make coordination decisions that are likely to be preferred by human evaluators, even in novel situations that weren't directly covered in the preference training data.
+**DPO's entire contribution (Rafailov et al., 2023, "Direct Preference
+Optimization: Your Language Model is Secretly a Reward Model") is
+eliminating stage 1.** There is no separate preference or reward model at
+any point. Rafailov et al. showed that the RLHF objective has a closed-form
+optimal policy, and that the reward function can be re-expressed *in terms
+of the policy itself*. Substituting that re-parameterization into the
+Bradley–Terry preference likelihood yields a simple supervised loss directly
+on the policy:
 
-The preference learning approach enables orchestration systems to generalize human values to new coordination challenges, developing strategies that maintain alignment with human intentions even as system capabilities and complexity grow.
+$$\mathcal{L}_{\text{DPO}}(\pi_\theta; \pi_{\text{ref}}) = -\mathbb{E}_{(x, y_w, y_l) \sim \mathcal{D}}\left[\log \sigma\left(\beta \log \frac{\pi_\theta(y_w|x)}{\pi_{\text{ref}}(y_w|x)} - \beta \log \frac{\pi_\theta(y_l|x)}{\pi_{\text{ref}}(y_l|x)}\right)\right]$$
+
+where $(x, y_w, y_l)$ is a prompt with a preferred ($y_w$) and dispreferred
+($y_l$) response, $\pi_{\text{ref}}$ is the frozen reference policy (usually
+the SFT model), $\sigma$ is the sigmoid, and $\beta$ controls how far the
+policy may drift from the reference — playing the role the KL penalty plays
+in PPO-based RLHF. Training is plain gradient descent on preference pairs:
+no reward model, no rollouts, no RL loop. That is why DPO became the default
+preference-tuning method for open-weight models — it is dramatically simpler
+and more stable than the PPO pipeline at comparable quality.
+
+The trade-off: DPO is constrained to the preference pairs you have (it
+cannot explore beyond them the way an RL loop can), and it inherits the
+Bradley–Terry assumption that preferences are pairwise and consistent.
+
+### The Post-DPO Landscape (2024–2026)
+
+DPO opened a family of direct-alignment methods, and practice has kept
+moving — a current course must place DPO in this lineage:
+
+- **Variants**: KTO (works from binary good/bad labels instead of pairs),
+  SimPO (drops the reference model), ORPO (folds preference optimization
+  into SFT), and IPO (fixes a DPO overfitting pathology).
+- **GRPO** (Shao et al., 2024, DeepSeekMath) returned to actual RL but
+  replaced PPO's learned value function with a group-relative baseline:
+  sample several responses per prompt and normalize rewards within the
+  group. This made RL training cheap enough to run at scale and powered
+  the reasoning-model wave (DeepSeek-R1, 2025).
+- **RLVR** (reinforcement learning from verifiable rewards) replaced the
+  learned reward signal entirely where outputs can be *checked* — math
+  answers, passing tests, valid tool calls. When the reward is a verifier
+  rather than a model, reward hacking has far less room to operate. As of
+  2026 this is the dominant paradigm for training reasoning and agentic
+  capability, with preference methods (DPO-family or RLHF) layered on for
+  style and safety.
+
+The arc to remember: **RLHF (learned reward + RL) → DPO (no reward model,
+no RL) → GRPO/RLVR (RL again, but with cheap baselines and verifiable
+rewards)**. Each step traded modeling machinery for either simplicity or
+verifiability.
 
 ### Handling Preference Disagreement
 
