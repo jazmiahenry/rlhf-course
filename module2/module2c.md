@@ -1,217 +1,125 @@
-# Module 2c: The Tripartite Code Method
+# Module 2c: From Design to Code (Three Hats)
 
-## Learning Objectives
-By the end of this module, you will:
-- Understand the three complementary perspectives for implementing aligned AI agents
-- Learn to think like a subject matter expert to understand user workflows and constraints
-- Grasp how mathematical modeling translates user expectations into algorithmic decisions
-- Master the principles of building modular, interpretable, and testable aligned systems
+> **What you'll get out of this:** the three perspectives you switch between when
+> you actually build an aligned system, and the pitfalls that come with each.
 
-## Introduction to the Method
+## The gap between a good design and a working system
 
-Once you've designed your alignment framework, the next challenge is implementation. The Tripartite Code Method provides three complementary perspectives that, when used together, ensure your code actually delivers the aligned behavior you designed.
+You can nail the design from 2b and still ship garbage. The translation from
+"here's what users value" to "here's running code that respects it" is where most
+alignment quietly dies.
 
-Each perspective addresses a critical aspect of implementation:
-- **Subject Matter Expert (SME)**: Understanding the human context and workflow
-- **Mathematical Modeling**: Formalizing trade-offs and decision-making processes
-- **Implementation Strategy**: Building systems that maintain alignment properties at scale
+The trick is to wear three hats, one at a time, and keep switching:
 
-## Perspective 1: Be the Subject Matter Expert
+1. **The subject-matter expert**, who understands the human context.
+2. **The mathematical modeler**, who turns that context into decisions a computer
+   can make.
+3. **The implementer**, who builds it so alignment survives scale.
 
-The first perspective requires stepping into your user's world to understand their workflow, urgency patterns, constraints, and the real stakes of their decisions. This isn't about gathering requirements, it's about developing genuine empathy for how your users work and what success means to them.
+Wear only one and you get a predictable failure. Let's take them in order.
 
-### Understanding User Workflows
+## What you'll be able to do
 
-**Daily Rhythms and Patterns:**
-- When during the day do different types of decisions need to be made?
-- How do priorities shift based on market conditions, deadlines, or external events?
-- What information sources do users currently rely on, and in what sequence?
-- How do users currently handle uncertainty, incomplete information, or conflicting data?
+- Develop real empathy for a user's workflow, not just a requirements list.
+- Turn user trade-offs into a math model that's tunable and explainable.
+- Build systems where the alignment-critical parts can be tested and watched.
 
-**Decision-Making Context:**
-- What questions are users really trying to answer, beyond their immediate queries?
-- How do individual decisions fit into larger projects or processes?
-- What happens after users receive AI recommendations, how do they act on information?
-- Who else is involved in or affected by the decisions your AI system supports?
+## Hat 1: Be the subject-matter expert
 
-**Constraint Recognition:**
-- What external rules, regulations, or standards govern user behavior?
-- What informal constraints exist due to organizational culture, client expectations, or professional norms?
-- How do resource limitations (time, budget, personnel) affect what's feasible?
-- What are the career or business consequences of different types of mistakes?
+This is not requirements-gathering. It's stepping into the user's world until you
+understand how they actually work and what "success" means to them.
 
-### Understanding Stakes and Urgency
+Go after three things:
 
-**Context-Dependent Timing:**
-Not all "urgent" requests are actually urgent, and not all important decisions are time-sensitive. Understanding the true timing constraints requires deep knowledge of user workflows.
+- **Their workflow.** When do which decisions get made? What sources do they
+  already trust, in what order? How do they handle missing or conflicting info
+  *today*?
+- **The real stakes.** What's the downstream effect of a recommendation? When is a
+  mistake a minor annoyance versus a career problem?
+- **The hidden constraints.** Formal rules, sure, but also the informal ones:
+  organizational culture, client expectations, professional norms.
 
-**Risk and Consequence Mapping:**
-- What are the downstream effects of different types of recommendations?
-- How do the stakes change based on the size, importance, or visibility of the decision?
-- What constitutes a minor inconvenience versus a major problem for users?
-- How do users currently manage and mitigate risks in their work?
+> **The cry-wolf insight.** Getting urgency *wrong* is as dangerous as being slow.
+> A system that screams "URGENT" at routine things gets ignored, and then it's
+> silent for the genuinely on-fire requests. Read timing from the workflow, not
+> from the user's adjectives.
 
-**Critical Insight**: Incorrect urgency assessment can be as dangerous as delayed information. Systems that cry wolf with false urgency will be ignored when real urgency arises.
+## Hat 2: Be the mathematical modeler
 
-### SME Perspective Implementation
+Now turn all that human texture into something a machine can optimize. This is the
+bridge from values to computation.
 
-**Workflow Integration:**
-Design your system to fit naturally into existing workflows rather than requiring users to adapt to new processes.
+Three moves:
 
-**Communication Patterns:**
-Match the way your system communicates to the way users actually think and talk about their work.
+- **Make the trade-offs explicit.** Real decisions balance competing goals. A model
+  forces those trade-offs into the open where you can tune them. (This is the
+  weighted scoring from Module 1C, applied for real.)
+- **Model the uncertainty.** Users act under incomplete information. Your model
+  should represent risk the way *they* think about it, not pretend the world is
+  certain.
+- **Account for time.** Information decays, urgency spikes. Bake temporal effects
+  into the value function.
 
-**Contextual Adaptation:**
-Build systems that recognize different types of situations and adapt their behavior accordingly.
+But keep it **interpretable**. A model nobody can explain is a model nobody will
+trust or tune.
 
-## Perspective 2: Mathematical Modeling
+> **The discipline:** every model should explain not just *what* it recommends but
+> *why it made that trade-off*. If you can't write the one-sentence reason, the
+> model is too complex.
 
-The second perspective translates user expectations, constraints, and trade-offs into mathematical models that can guide algorithmic decisions. This bridges the gap between human values and computational optimization.
+## Hat 3: Be the implementer
 
-### Formalizing User Priorities
+A perfect model still fails if the implementation leaks alignment. So build for it:
 
-**Multi-Objective Optimization:**
-Real-world decisions involve balancing multiple competing objectives. Mathematical models make these trade-offs explicit and optimizable.
+- **Isolate the alignment-critical functions** so you can monitor, test, and improve
+  them on their own.
+- **Separate performance optimization from alignment optimization.** Tune each
+  without breaking the other.
+- **Feed the model an aligned diet.** Don't hand a language model raw, unfiltered
+  data. Filter, rank, and contextualize it *first*, so the model reasons over
+  pre-aligned inputs. (This two-stage idea, score then generate, is exactly what
+  the financial-agent notebooks build.)
+- **Plan for failure.** Graceful degradation for edge cases and for moments when two
+  alignment principles collide.
 
-**Uncertainty Handling:**
-Users operate under uncertainty, and aligned systems must model how users prefer to handle incomplete or conflicting information.
+And prove it works: compare aligned versus naive approaches head to head, test the
+edge cases on purpose, and watch the alignment metrics over time so learning
+doesn't drift away from the user's values.
 
-**Value Functions:**
-Translate qualitative user preferences into quantitative functions that can guide system behavior.
+## The pitfalls, one per hat
 
-### Core Mathematical Principles
+- **SME pitfall:** assuming you understand users without watching them; trusting
+  stated requirements over observed behavior.
+- **Modeler pitfall:** optimizing for mathematical elegance over user
+  understanding; building models too complex to interpret or tune.
+- **Implementer pitfall:** prioritizing raw performance over alignment in the
+  architecture; building a monolith you can't inspect or adjust.
 
-**Weighted Scoring Approaches:**
-Combine multiple factors according to user-defined priorities, allowing for tuning and adaptation over time.
+Notice they're all the same mistake in different clothes: losing sight of the user
+while chasing the thing your hat cares about. Switching hats on purpose is the
+cure.
 
-**Probability and Risk Modeling:**
-Explicitly model uncertainty and risk in ways that align with user risk tolerance and decision-making preferences.
-
-**Temporal Considerations:**
-Account for how the value of information and decisions changes over time, including urgency effects and information decay.
-
-**Personalization Mathematics:**
-Model individual user preferences and constraints in ways that can scale across different users and contexts.
-
-### Model Interpretability
-
-**Transparent Decision Making:**
-Ensure that mathematical models can be explained to users in terms they understand and find reasonable.
-
-**Tunable Parameters:**
-Design models with parameters that can be adjusted based on user feedback and changing requirements.
-
-**Diagnostic Capabilities:**
-Build models that can explain not just what they recommend, but why they made specific trade-offs.
-
-## Perspective 3: Implementation Strategy
-
-The third perspective focuses on building systems that are modular, interpretable, and maintainable while preserving alignment properties as they scale and evolve.
-
-### Architectural Principles
-
-**Modularity for Alignment:**
-Design system components so that alignment-critical functions are isolated and can be monitored, tested, and improved independently.
-
-**Separation of Concerns:**
-Distinguish between performance optimization and alignment optimization, allowing each to be tuned appropriately.
-
-**Transparency by Design:**
-Build interpretability into the system architecture rather than trying to add it after the fact.
-
-### Implementation Components
-
-**Preprocessing for Alignment:**
-Ensure that AI agents see aligned inputs, not just raw data. This includes filtering, ranking, and contextualizing information before it reaches language models or decision systems.
-
-**Decision Pipeline Design:**
-Create clear separation between data gathering, analysis, recommendation generation, and presentation to users.
-
-**Feedback Integration:**
-Build systems that can learn from user interactions and adapt alignment parameters over time.
-
-**Fallback Mechanisms:**
-Design graceful degradation for edge cases, system failures, or situations where alignment principles conflict.
-
-### Quality Assurance for Alignment
-
-**Comparative Analysis:**
-Systematically compare aligned versus naive approaches to validate that alignment actually improves user outcomes.
-
-**Edge Case Testing:**
-Specifically test scenarios where alignment principles might conflict or where standard approaches would fail.
-
-**Long-term Monitoring:**
-Track alignment metrics over time to ensure that system learning doesn't drift away from user values.
-
-## Integrating the Three Perspectives
-
-The power of the Tripartite Code Method comes from using all three perspectives together throughout the development process:
-
-### SME + Mathematical Integration
-- User workflow understanding informs mathematical model design
-- Mathematical models reveal gaps in workflow understanding
-- Iterative refinement improves both user empathy and model accuracy
-
-### Mathematical + Implementation Integration
-- Mathematical models guide system architecture decisions
-- Implementation constraints inform model simplification and optimization
-- Performance results drive mathematical model refinement
-
-### SME + Implementation Integration
-- User workflow understanding drives architectural decisions
-- Implementation capabilities constrain what workflows can be supported
-- User feedback on implemented systems improves workflow understanding
-
-## Development Process
-
-**Phase 1: Deep User Understanding**
-Spend significant time in the SME perspective before writing any code. Understand the human context thoroughly.
-
-**Phase 2: Mathematical Formalization**
-Translate user insights into mathematical models that can guide system behavior.
-
-**Phase 3: Modular Implementation**
-Build system components that implement mathematical models while preserving interpretability and adaptability.
-
-**Phase 4: Integration and Testing**
-Combine components and test the full system against real user workflows and edge cases.
-
-**Phase 5: Iteration and Refinement**
-Use all three perspectives to continuously improve the system based on real-world performance and user feedback.
-
-## Common Pitfalls and How to Avoid Them
-
-**SME Perspective Pitfalls:**
-- Assuming you understand users without deep observation
-- Focusing on stated requirements rather than observed behavior
-- Underestimating the importance of informal constraints and social factors
-
-**Mathematical Perspective Pitfalls:**
-- Over-optimizing for mathematical elegance at the expense of user understanding
-- Creating models that are too complex to be interpretable or tunable
-- Ignoring uncertainty and edge cases in model design
-
-**Implementation Perspective Pitfalls:**
-- Prioritizing performance over alignment in system architecture
-- Building monolithic systems that can't be easily monitored or adjusted
-- Neglecting the user experience of interacting with aligned systems
-
-## Key Takeaways
-
-- **All three perspectives are necessary**: Each perspective reveals different aspects of the alignment challenge
-- **Integration is critical**: The perspectives must inform each other throughout development
-- **User understanding drives everything**: Deep SME perspective should guide both mathematical modeling and implementation decisions
-- **Mathematical rigor enables scale**: Formal models allow aligned behavior to scale beyond manual intervention
-- **Implementation quality determines success**: Even perfect models fail if implementation doesn't preserve alignment properties
-- **Iteration is essential**: Use all three perspectives continuously to refine and improve aligned systems
-
-## Reflection Questions
-
-1. For a system you're familiar with, what would "deep SME understanding" reveal that standard requirements gathering might miss?
-
-2. How would you translate a complex user trade-off preference into a mathematical model that could guide system behavior?
-
-3. What implementation decisions have you seen that prioritized technical performance at the expense of user alignment?
-
-4. How might the three perspectives reveal different aspects of the same alignment challenge?
+## The takeaways
+
+- Building aligned systems means switching between **three perspectives**: the SME
+  (human context), the modeler (math), and the implementer (scale).
+- **Read urgency from the workflow, not the adjectives.** False urgency is as
+  dangerous as being slow.
+- **Every model needs a one-sentence reason.** If it doesn't have one, it's too
+  complex to trust.
+- **Feed the model pre-aligned inputs.** Score and select *before* you generate.
+- The pitfalls all reduce to **losing the user** while chasing your hat's priority.
+
+## Think about it
+
+1. For a system you know, what would deep SME observation reveal that a
+   requirements doc would miss?
+2. Take one real user trade-off and sketch the math model that would capture it.
+   What's the one-sentence reason it would output?
+3. Where have you seen performance prioritized over alignment in a real system?
+   What did it cost?
+
+## Next
+
+Module 2d gets specific about implementation: the architecture, the scoring
+pipeline, and the feedback loops that keep an aligned system aligned as it scales.

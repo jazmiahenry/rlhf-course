@@ -1,184 +1,145 @@
-# Module 2b: The Tripartite Design Framework
+# Module 2b: Designing for Alignment (the Three Questions)
 
-## Learning Objectives
-By the end of this module, you will:
-- Master the three dimensions of systematic alignment design
-- Learn to identify and map user values to system requirements
-- Understand how to measure alignment and translate values into metrics
-- Make informed architectural decisions that support alignment goals
+> **What you'll get out of this:** a design framework that forces you to answer
+> three questions in order, and stops you from skipping the one everyone skips.
 
-## Introduction to the Framework
+## The order matters
 
-Successful AI alignment requires systematic thinking across three interconnected dimensions. The Tripartite Design Framework provides a structured approach to designing aligned systems by addressing conceptual understanding, empirical measurement, and technical implementation as complementary perspectives.
+Here's how most teams build an "aligned" system: they pick an architecture, ship
+it, then try to bolt values on with a system prompt. Backwards. By the time you're
+arguing about the prompt, you've already baked in decisions that fight you.
 
-Each dimension answers a critical question:
-- **Conceptual Design**: What do users truly value?
-- **Empirical Design**: How can we measure and optimize for those values?
-- **Technical Design**: What architecture best serves those values and measurements?
+The fix is to answer three questions, *in this order*:
 
-## Dimension 1: Conceptual Design - Understanding Values
+1. **What do users actually value?** (conceptual)
+2. **How do we measure those values?** (empirical)
+3. **What architecture serves the values and the measurement?** (technical)
 
-The foundation of alignment is understanding what users truly value, not just what they say they want. Users often focus on immediate needs without articulating deeper constraints and priorities that govern their work.
+Skip question one and you optimize the wrong thing beautifully. Skip question two
+and you can't tell if you succeeded. This lesson is those three questions, done
+right.
 
-### Identifying True User Values
+## What you'll be able to do
 
-**Surface Requests vs. Deep Values:**
-Users might ask for "faster responses" when they actually value "timely, actionable insights that don't compromise accuracy." The difference matters enormously for system design.
+- Pull a user's *real* values out from under their stated requests.
+- Turn fuzzy values into metrics you can actually optimize.
+- Pick an architecture because it serves alignment, not because it's elegant.
 
-**Value Categories to Explore:**
-- **Professional obligations**: Regulatory compliance, ethical standards, professional reputation
-- **Practical constraints**: Time limitations, resource availability, skill requirements
-- **Quality standards**: Accuracy thresholds, verification needs, acceptable risk levels
-- **Usability preferences**: Learning curve tolerance, integration requirements, workflow compatibility
+## Question 1: What do users actually value?
 
-### Key Questions for Value Discovery
+Not what they ask for. What they value. These are different, and the gap is where
+systems die.
 
-**Understanding Non-Negotiable Constraints:**
-- What rules or standards can never be violated, regardless of other benefits?
-- What are the career or business consequences of different types of errors?
-- How do external stakeholders (clients, regulators, colleagues) influence acceptable behavior?
+> **The classic miss:** a user asks for "faster responses." What they actually
+> value is "timely, actionable insight that doesn't sacrifice accuracy." Build for
+> the literal request and you'll happily make them something fast and wrong.
 
-**Mapping Trade-Off Preferences:**
-- When time is limited, what gets prioritized and what gets sacrificed?
-- How do quality standards change based on the stakes of the decision?
-- What level of uncertainty is acceptable for different types of recommendations?
+So go looking for the values underneath. Four kinds worth digging for:
 
-**Defining "Good Enough" vs. "Perfect":**
-- At what point does additional accuracy stop being worth additional time or effort?
-- How does context (urgency, importance, audience) affect quality thresholds?
-- What constitutes actionable insight versus interesting information?
+- **Professional obligations:** what rules, regulations, or reputational lines can
+  *never* be crossed?
+- **Practical constraints:** time, budget, skills, what's actually feasible?
+- **Quality standards:** how accurate is accurate enough, and when does that change?
+- **Usability:** how much learning curve, integration friction, or workflow change
+  will they tolerate?
 
-### Value Mapping Process
+Three questions reliably surface the real values:
 
-1. **Observe workflows** in natural settings to understand actual (vs. stated) priorities
-2. **Analyze decision patterns** to identify implicit trade-offs and constraints
-3. **Explore edge cases** where competing values create tension
-4. **Validate understanding** through structured feedback and iteration
+- **What can never be violated, no matter the upside?** (the non-negotiables)
+- **When time runs short, what gets sacrificed first?** (the trade-off ranking)
+- **When does "more accurate" stop being worth more time?** (the good-enough line)
 
-## Dimension 2: Empirical Design - Measuring What Matters
+And don't just ask. Watch. Observe real workflows, study actual decision patterns,
+push on the edge cases where values collide. People's stated priorities and
+revealed priorities are rarely the same.
 
-Once you understand user values, the next challenge is translating them into measurable outcomes that can guide system behavior. The goal is to create metrics that truly reflect user success, not just system performance.
+## Question 2: How do you measure it?
 
-### From Values to Metrics
+Now translate those values into numbers you can steer by. The trap here is
+measuring the *system* when you meant to measure *user success*.
 
-**Alignment Metrics vs. Performance Metrics:**
-Traditional AI metrics (accuracy, latency, throughput) measure system capabilities but may not reflect user value. Alignment metrics measure whether the system's behavior matches user priorities.
+> **Alignment metrics vs performance metrics.** Accuracy, latency, throughput
+> measure what the system *can do*. They don't tell you if its behavior matched
+> what the user *needed*. You want the second kind.
 
-**Categories of Alignment Metrics:**
+Three families of alignment metric:
 
-**Trust and Credibility:**
-- User confidence in recommendations over time
-- Frequency of user verification or fact-checking
-- Rate of recommendation acceptance vs. rejection
-- Long-term relationship between AI suggestions and user success
+- **Trust and credibility:** Does user confidence rise over time? How often do they
+  re-verify the AI's output? Do they accept or override its suggestions? Over the
+  long run, do its recommendations track their actual success?
+- **Contextual fit:** Is it relevant to *this* situation? Does it adapt when
+  priorities shift? Does it read urgency and stakes correctly?
+- **Trade-off quality:** Does it balance speed against accuracy the way this user
+  would? Does it respect their quality bar and risk tolerance?
 
-**Contextual Appropriateness:**
-- Relevance to specific user situations and constraints
-- Adaptation to changing priorities and circumstances
-- Recognition of urgency and importance levels
-- Integration with existing workflows and processes
+The hard part is the subjective stuff (trust, satisfaction, value). You measure it
+with proxies: re-verification rate is a proxy for trust; override rate is a proxy
+for confidence; long-term outcome correlation is the real prize. Define those
+proxies *before* you build, or you'll rationalize whatever you ship.
 
-**Value Trade-Off Optimization:**
-- Balance between competing priorities (speed vs. accuracy, novelty vs. reliability)
-- Consistency with user-defined quality thresholds
-- Appropriate handling of uncertainty and risk
-- Effectiveness in supporting user decision-making
+## Question 3: What architecture serves all that?
 
-### Designing Measurement Systems
+Only now do you pick the technical approach, and you pick it to serve the answers
+above, not because it's the latest thing.
 
-**Key Considerations:**
-- **What behaviors indicate alignment?** Look for patterns that show the system understands and respects user values
-- **How do you measure subjective qualities?** Develop proxy metrics for trust, satisfaction, and value creation
-- **What are acceptable trade-offs?** Define the boundaries within which optimization should occur
-- **How does success vary by context?** Ensure metrics account for situational differences in user needs
+The decisions that actually matter for alignment:
 
-**Measurement Framework:**
-1. **Direct value metrics**: Measures that directly reflect user goal achievement
-2. **Process quality metrics**: Measures of how well the system respects constraints and preferences
-3. **Relationship metrics**: Measures of long-term user trust and system adoption
-4. **Context sensitivity metrics**: Measures of appropriate adaptation to different situations
+- **Agent-based vs rule-based.** Agents learn and handle novelty; rules give strict
+  compliance and predictability. Most real systems are **hybrid**: rule-based
+  guardrails around an agent-based optimizer.
+- **Where control lives.** Prompt constraints are flexible but inconsistent;
+  algorithmic controls are reliable but rigid. Layer them: hard rules for the
+  things that must never break, flexible control for everything else.
+- **Timing.** Real-time is responsive but shallow; batch is thorough but slow;
+  adaptive timing matches effort to the stakes.
+- **Centralized vs distributed.** Centralized gives consistency; distributed gives
+  scale and local adaptation.
 
-## Dimension 3: Technical Design - Choosing the Right Approach
+> **The selection rule:** choose the approach that best supports *aligned
+> behavior*, and make interpretability a hard requirement for any high-stakes
+> decision. Elegance is not a tiebreaker.
 
-The final dimension involves selecting technical approaches and architectural decisions that best support your conceptual understanding and empirical measurement goals.
+## The three answers have to talk to each other
 
-### Key Architectural Decisions
+The framework's power is in the loops between the questions, not the questions
+alone:
 
-**Agent-Based vs. Rule-Based Systems:**
-- **Agent-based**: Better for learning and adaptation, handling novel situations
-- **Rule-based**: Better for strict compliance, predictable behavior
-- **Hybrid approaches**: Combine rule-based constraints with agent-based optimization
+- **Values shape which metrics matter**, and your metrics, once running, reveal
+  where you misread the values. Refine both.
+- **Metrics drive architecture choices**, and what's technically measurable feeds
+  back into which metrics are even possible.
+- **Values constrain the architecture** (some technical choices simply can't be
+  made aligned), and technical limits sometimes force an honest renegotiation of a
+  trade-off.
 
-**Control Mechanisms:**
-- **Prompt constraints**: Flexible but potentially inconsistent
-- **Algorithmic controls**: Reliable but potentially rigid
-- **Layered approaches**: Multiple levels of control for different types of decisions
+You'll see this concretely in this module's financial-agent example (2e and the
+notebooks): the user's values become scoring weights, the weights become a
+measurable selection rule, and the architecture is built to keep that rule
+inspectable.
 
-**Processing Architecture:**
-- **Real-time**: Immediate response but limited analysis depth
-- **Batch processing**: Thorough analysis but delayed response
-- **Adaptive timing**: Response speed based on urgency and complexity
+## The takeaways
 
-**Data and Decision Architecture:**
-- **Centralized**: Consistent behavior, easier control
-- **Distributed**: Better scalability, local adaptation
-- **Federated**: Balance between consistency and flexibility
+- Answer three questions **in order**: values, then measurement, then architecture.
+  The order is the whole point.
+- **Real values hide under stated requests.** Dig for the non-negotiables, the
+  trade-off ranking, and the good-enough line, and watch behavior, don't just ask.
+- **Measure user success, not system performance.** Define your trust and trade-off
+  proxies before you build.
+- **Pick architecture to serve alignment**, with interpretability mandatory for
+  high stakes.
+- The three answers **inform each other**. Iterate the loop.
 
-### Architecture Selection Principles
+## Think about it
 
-**Alignment-First Design:**
-Choose technical approaches based on their ability to support aligned behavior, not just technical elegance or performance optimization.
+1. For a domain you know, what would users *say* they want versus what they
+   actually value? Write both columns.
+2. How would you measure whether a system genuinely respects those values, using
+   only things you can observe?
+3. Which architecture decision would matter most for keeping *your* use case
+   aligned?
 
-**Interpretability Requirements:**
-Ensure that users can understand why the system made specific decisions, especially for high-stakes recommendations.
+## Next
 
-**Adaptability vs. Stability:**
-Balance the need for system learning and improvement with the need for predictable, reliable behavior.
-
-**Scalability Considerations:**
-Design for growth while maintaining alignment properties as the system handles more users and use cases.
-
-## Integrating the Three Dimensions
-
-The power of the Tripartite Design Framework comes from the integration of all three dimensions:
-
-### Conceptual ↔ Empirical Integration
-- Values inform which metrics matter most
-- Measurement results reveal gaps in value understanding
-- Iterative refinement improves both value mapping and metric design
-
-### Empirical ↔ Technical Integration
-- Metrics guide architectural decisions and optimization targets
-- Technical capabilities determine what can be measured effectively
-- Performance data informs metric refinement and technical improvements
-
-### Conceptual ↔ Technical Integration
-- Values constrain acceptable technical approaches
-- Technical limitations may require value trade-off negotiations
-- Architecture design embeds value preferences into system behavior
-
-## Framework Application Process
-
-1. **Start with values**: Deep understanding of user priorities and constraints
-2. **Design measurements**: Translate values into observable, optimizable metrics
-3. **Choose architecture**: Select technical approaches that support value-aligned measurement
-4. **Iterate and refine**: Use measurement results to improve value understanding and technical implementation
-5. **Validate alignment**: Confirm that the integrated system actually serves user values in practice
-
-## Key Takeaways
-
-- **All three dimensions are necessary**: Neglecting any dimension leads to misaligned systems
-- **Integration is critical**: The dimensions must work together, not independently
-- **Values drive everything**: Conceptual understanding of user values should guide both measurement and technical decisions
-- **Iteration is essential**: Alignment is achieved through cycles of design, measurement, and refinement
-- **Context matters**: The framework must be applied with deep understanding of specific user needs and constraints
-
-## Reflection Questions
-
-1. For a domain you know well, what would users say they want versus what they actually value? How might these differ?
-
-2. How would you measure whether an AI system truly understands and respects the values in your domain?
-
-3. What technical architecture decisions would be most critical for maintaining alignment in your use case?
-
-4. How might the three dimensions of the framework interact differently in your domain compared to others?
+Module 2c flips from design to code: three perspectives (subject-matter expert,
+mathematical modeler, implementer) that make sure the system you build actually
+delivers the alignment you designed.
